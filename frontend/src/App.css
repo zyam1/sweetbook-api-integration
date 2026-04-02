@@ -1,42 +1,243 @@
-.app {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 40px 20px;
-}
-
-h1 {
-  margin-bottom: 24px;
-}
-
-.buttons {
+/* Layout */
+.layout {
+  min-height: 100vh;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 56px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+}
+
+.nav-brand {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+}
+
+.nav-links {
+  display: flex;
+  gap: 4px;
+}
+
+.nav-links a {
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  color: #555;
+  transition: background 0.15s;
+}
+
+.nav-links a:hover {
+  background: #f3f4f6;
+}
+
+.nav-links a.active {
+  background: #111;
+  color: #fff;
+}
+
+.main {
+  flex: 1;
+  padding: 32px 24px;
+  max-width: 960px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Page */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 24px;
 }
 
-.buttons button {
-  padding: 10px 20px;
-  border: 1px solid #ddd;
+.page-header h2 {
+  margin: 0;
+}
+
+/* Buttons */
+.btn {
+  padding: 8px 16px;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
   background: #fff;
   cursor: pointer;
   font-size: 14px;
+  transition: background 0.15s;
 }
 
-.buttons button:hover {
-  background: #f5f5f5;
+.btn:hover {
+  background: #f9fafb;
 }
 
-.result-area {
-  background: #f9f9f9;
-  border: 1px solid #eee;
+.btn-primary {
+  background: #111;
+  color: #fff;
+  border-color: #111;
+}
+
+.btn-primary:hover {
+  background: #333;
+}
+
+.btn-primary:disabled {
+  background: #999;
+  border-color: #999;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  color: #dc2626;
+  border-color: #dc2626;
+}
+
+.btn-danger:hover {
+  background: #fef2f2;
+}
+
+.btn-group {
+  display: flex;
+  gap: 8px;
+}
+
+/* Cards */
+.card-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 20px;
-  min-height: 200px;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
 }
 
-.result-area pre {
+.card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.card h3 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+
+.card-meta {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #888;
+}
+
+/* Badge */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: #555;
+}
+
+.badge-draft {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-finalized {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-paid {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+/* Form */
+.form {
+  max-width: 480px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #111;
+}
+
+/* Credit */
+.credit-card {
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+.credit-label {
+  margin: 0;
+  font-size: 14px;
+  color: #888;
+}
+
+.credit-amount {
+  margin: 8px 0 4px;
+  font-size: 36px;
+  font-weight: 700;
+  color: #111;
+}
+
+.credit-env {
+  margin: 0;
+  font-size: 13px;
+  color: #aaa;
+}
+
+/* ResultView */
+.result-view {
+  margin-top: 24px;
+}
+
+.result-view summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: #888;
+}
+
+.result-view pre {
   background: #1e1e1e;
   color: #d4d4d4;
   padding: 16px;
@@ -44,18 +245,20 @@ h1 {
   overflow-x: auto;
   font-size: 13px;
   line-height: 1.5;
+  margin-top: 8px;
 }
 
+/* States */
 .loading {
-  color: #666;
+  color: #888;
 }
 
 .error {
-  color: #e53e3e;
-  font-weight: bold;
+  color: #dc2626;
 }
 
-h2 {
-  font-size: 18px;
-  margin-bottom: 12px;
+.empty {
+  color: #888;
+  text-align: center;
+  padding: 48px 0;
 }
