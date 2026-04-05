@@ -19,6 +19,16 @@
 ```
 .claude/
 ├── INDEX.md                    ← 본 문서
+├── settings.json               # Claude Code 설정 (권한, 언어)
+├── agents/                     # 에이전트 정의 (7개)
+│   ├── co-analysis.md          #   코드베이스 심층 분석
+│   ├── be-code-route.md        #   Backend Route 구현
+│   ├── be-code-service.md      #   Backend Service 구현
+│   ├── be-code-middleware.md    #   Backend Middleware 구현
+│   ├── fe-code-feature.md      #   Frontend Feature 구현
+│   ├── fe-code-component.md    #   Frontend 공통 컴포넌트 구현
+│   ├── co-review.md            #   코드 리뷰/검증
+│   └── co-infra-git.md         #   Git 커밋
 ├── rules/                      # 구현 규칙 (Claude가 코드 작성 시 따라야 할 규칙)
 │   ├── 00-workflow.md          #   전체 워크플로우 + API 호출 순서
 │   ├── 01-book-spec.md         #   판형 선택 규칙
@@ -46,14 +56,18 @@
 
 ## 작업별 참조 가이드
 
-| 작업 | rules/ | api/ | guide/ |
-|------|--------|------|--------|
-| 판형 선택 구현 | `01-book-spec.md` | `01-book-specs.md` | — |
-| 템플릿 적용 구현 | `02-template.md` | `02-templates.md` | — |
-| 책 생성/편집 구현 | `03-book-creation.md` | — | — |
-| 이미지 업로드 구현 | `04-image-upload.md` | — | — |
-| 주문 흐름 구현 | `05-order.md` | `03-orders.md` | `order-status-flow.md` |
-| 크레딧/결제 구현 | `05-order.md` | `04-credits.md` | `credits-management.md` |
-| 웹훅 수신 구현 | `06-webhook.md` | `05-webhooks.md` | `webhook-events.md` |
-| Live 환경 전환 | `07-production.md` | — | — |
-| **전체 흐름 파악** | `00-workflow.md` | `00-common.md` | — |
+| 작업 | 에이전트 | rules/ | api/ | guide/ |
+|------|---------|--------|------|--------|
+| 판형 선택 구현 | `be-code-service` | `01-book-spec.md` | `01-book-specs.md` | — |
+| 템플릿 적용 구현 | `be-code-service` | `02-template.md` | `02-templates.md` | — |
+| 책 생성/편집 구현 | `be-code-service` | `03-book-creation.md` | — | — |
+| 이미지 업로드 구현 | `be-code-service` | `04-image-upload.md` | — | — |
+| 주문 흐름 구현 | `be-code-service` + `be-code-route` | `05-order.md` | `03-orders.md` | `order-status-flow.md` |
+| 크레딧/결제 구현 | `be-code-service` + `be-code-route` | `05-order.md` | `04-credits.md` | `credits-management.md` |
+| 웹훅 수신 구현 | `be-code-middleware` | `06-webhook.md` | `05-webhooks.md` | `webhook-events.md` |
+| Frontend 기능 | `fe-code-feature` | — | — | — |
+| 공통 컴포넌트 | `fe-code-component` | — | — | — |
+| Live 환경 전환 | — | `07-production.md` | — | — |
+| **전체 흐름 파악** | `co-analysis` | `00-workflow.md` | `00-common.md` | — |
+| **코드 리뷰** | `co-review` | — | — | — |
+| **Git 커밋** | `co-infra-git` | — | — | — |
