@@ -1,13 +1,62 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// SweetPress Prisma Schema
+// 참조: PLAN.md §3.2 차별화 기능 + DB 활용 후보
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// 내가 만든 책 메타 (SweetBook bookUid 매핑)
+model Project {
+  id          Int      @id @default(autoincrement())
+  bookUid     String   @unique
+  title       String
+  bookSpecUid String
+  status      String   @default("DRAFT") // DRAFT / FINALIZED / ORDERED
+  externalRef String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders Order[]
+
+  @@index([status])
+}
+
+// 주문 이력 (SweetBook orderUid 매핑)
+model Order {
+  id                Int      @id @default(autoincrement())
+  sweetbookOrderUid String   @unique
+  projectId         Int?
+  externalRef       String?
+  status            String   // PAID / CONFIRMED / IN_PRODUCTION / SHIPPED / DELIVERED / CANCELLED
+  quantity          Int
+  totalAmount       Int
+  paidCreditAmount  Int
+  recipientName     String?
+  trackingNumber    String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  project Project? @relation(fields: [projectId], references: [id])
+
+  @@index([status])
+  @@index([externalRef])
+}
+
+// 웹훅 이벤트 로그 (멱등 처리용)
+model WebhookEvent {
+  id          Int      @id @default(autoincrement())
+  deliveryId  String   @unique  // X-Webhook-Delivery
+  eventType   String              // order.paid / order.shipped / ...
+  payload     Json
+  processed   Boolean  @default(false)
+  receivedAt  DateTime @default(now())
+  processedAt DateTime?
+
+  @@index([eventType])
+  @@index([processed])
 }
