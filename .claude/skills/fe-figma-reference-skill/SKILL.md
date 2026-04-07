@@ -19,6 +19,7 @@ description: "[WHAT: Frontend 작업 시 Figma(SweetPress) 참조 강제 Skill] 
 | 4 | `figma:figma-use` 스킬 선행 호출 → `figma:figma-implement-design` 호출 순서 준수 | **작업 무효** |
 | 5 | Figma 조회 결과(디자인 토큰/컴포넌트/레이아웃)를 구현에 반영. "참고만 했다"는 무효 | **작업 무효** |
 | 6 | Figma 조회 실패 시 추측 구현 금지 → 사용자에게 확인 | **작업 무효** |
+| 7 | 모달/다이얼로그가 필요하면 반드시 기존 공통 컴포넌트 [frontend/src/components/ui/Modal.jsx](frontend/src/components/ui/Modal.jsx) 사용. 신규 모달 컴포넌트 생성/인라인 다이얼로그/`window.alert`·`confirm` 대체 금지. props: `open`, `title`, `message`, `onClose`, `variant`('info'\|'error'\|'success'), `confirmText` | **작업 무효** |
 
 ---
 
