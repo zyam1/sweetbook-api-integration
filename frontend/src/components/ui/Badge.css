@@ -1,0 +1,29 @@
+/* SweetPress Badge — Figma 컴포넌트셋 'Badge' (color: Pink/Lavender/Yellow/Neutral) */
+.sp-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  border: var(--border-hairline) solid var(--color-border-hairline);
+  line-height: 1;
+}
+
+.sp-badge--pink {
+  background-color: var(--color-accent-pink-bg);
+  color: var(--color-accent-pink);
+}
+.sp-badge--lavender {
+  background-color: var(--color-accent-lavender-bg);
+  color: var(--color-accent-lavender);
+}
+.sp-badge--yellow {
+  background-color: var(--color-accent-yellow-bg);
+  color: var(--color-ink-primary);
+}
+.sp-badge--neutral {
+  background-color: var(--color-bg-subtle);
+  color: var(--color-ink-secondary);
+}

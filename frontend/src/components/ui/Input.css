@@ -1,0 +1,37 @@
+/* SweetPress Input — Figma 컴포넌트셋 'Input' (state: Default/Focused/Error) */
+.sp-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--space-md);
+  background-color: var(--color-bg-surface);
+  color: var(--color-ink-primary);
+  border: var(--border-ink) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  line-height: 1;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sp-input::placeholder {
+  color: var(--color-ink-tertiary);
+}
+
+.sp-input:focus {
+  border-color: var(--color-accent-pink);
+  box-shadow: 0 0 0 3px var(--color-accent-pink-bg);
+}
+
+.sp-input--error {
+  border-color: var(--color-state-danger);
+}
+.sp-input--error:focus {
+  box-shadow: 0 0 0 3px rgba(255, 82, 82, 0.15);
+}
+
+.sp-input:disabled {
+  background-color: var(--color-bg-subtle);
+  color: var(--color-ink-tertiary);
+  cursor: not-allowed;
+}

@@ -1,0 +1,11 @@
+.sp-container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+}
+
+.sp-container--sm { max-width: 640px; }
+.sp-container--md { max-width: 960px; }
+.sp-container--lg { max-width: 1200px; }

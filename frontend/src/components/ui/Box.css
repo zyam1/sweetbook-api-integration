@@ -1,0 +1,17 @@
+/* SweetPress Box — Figma 컴포넌트셋 'Box' (variant: Default/Bordered/Highlighted) */
+.sp-box {
+  background-color: var(--color-bg-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+}
+
+.sp-box--default {
+  box-shadow: var(--shadow-sm);
+}
+.sp-box--bordered {
+  border: var(--border-ink) solid var(--color-border-strong);
+}
+.sp-box--highlighted {
+  background-color: var(--color-accent-lavender-bg);
+  border: var(--border-ink) solid var(--color-border-strong);
+}

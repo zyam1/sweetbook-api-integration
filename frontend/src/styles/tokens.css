@@ -1,0 +1,89 @@
+/*
+ * SweetPress Design Tokens
+ * Source: Figma SweetPress (fileKey: 7WJrsI7QOEOrXFP1x4LtAH)
+ * Collection: "SweetPress Tokens" (mode: Default)
+ *
+ * 변수명은 Figma 변수 경로(category/role/variant)를 그대로 보존하여
+ * --{category}-{role}-{variant} 형식의 CSS 변수로 매핑한다.
+ */
+
+:root {
+  /* ─────────── Color · Background ─────────── */
+  --color-bg-base: #faf9f5;        /* color/bg/base */
+  --color-bg-surface: #ffffff;     /* color/bg/surface */
+  --color-bg-subtle: #f4f2ec;      /* color/bg/subtle */
+
+  /* ─────────── Color · Ink (Text) ─────────── */
+  --color-ink-primary: #1a1a1a;    /* color/ink/primary */
+  --color-ink-secondary: #6b6b6b;  /* color/ink/secondary */
+  --color-ink-tertiary: #9b9b9b;   /* color/ink/tertiary */
+  --color-ink-on-dark: #ffffff;    /* color/ink/onDark */
+
+  /* ─────────── Color · Accent ─────────── */
+  --color-accent-pink: #ff4d8d;        /* color/accent/pink */
+  --color-accent-pink-bg: #ffeef4;     /* color/accent/pink-bg */
+  --color-accent-lavender: #c9b6ff;    /* color/accent/lavender */
+  --color-accent-lavender-bg: #f2eeff; /* color/accent/lavender-bg */
+  --color-accent-yellow: #ffe66d;      /* color/accent/yellow */
+  --color-accent-yellow-bg: #fffae6;   /* color/accent/yellow-bg */
+
+  /* ─────────── Color · State ─────────── */
+  --color-state-success: #4adf80;   /* color/state/success */
+  --color-state-danger: #ff5252;    /* color/state/danger */
+  --color-state-info: #5c7cfa;      /* color/state/info */
+  --color-state-info-bg: #edf1fb;   /* color/state/info-bg */
+
+  /* ─────────── Color · Border ─────────── */
+  --color-border-hairline: #e8e6e0; /* color/border/hairline */
+  --color-border-strong: #1a1a1a;   /* color/border/strong */
+
+  /* ─────────── Border Width ─────────── */
+  --border-hairline: 1px;   /* border/hairline */
+  --border-ink: 1.5px;      /* border/ink */
+  --border-strong: 1.5px;   /* border/strong */
+
+  /* ─────────── Radius ─────────── */
+  --radius-sm: 8px;   /* radius/sm */
+  --radius-md: 10px;  /* radius/md */
+  --radius-lg: 14px;  /* radius/lg */
+
+  /* ─────────── Spacing ─────────── */
+  --space-xs: 4px;    /* space/xs */
+  --space-sm: 8px;    /* space/sm */
+  --space-md: 16px;   /* space/md */
+  --space-lg: 24px;   /* space/lg */
+  /* 추론: Figma 토큰에 xl 없음. 컴포넌트 패딩 일관성을 위해 파생값 정의 */
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* ─────────── Typography ─────────── *
+   * 근거: Figma Design System v0.2 페이지 텍스트 노드 — 모든 라벨이 Inter,
+   * 본문/입력 14px Regular, 버튼 14px Semi Bold, 제목 16px Bold, 보조 12px.
+   * 토큰에 명시된 typography 변수는 없어 텍스트 노드에서 추론. */
+  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo',
+    'Pretendard', system-ui, sans-serif;
+
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  /* 추론: 메인 페이지 heading 사이즈가 Figma에서 직접 확인되지 않아 일반적인
+     디자인 시스템 스케일로 보강 */
+  --font-size-lg: 20px;
+  --font-size-xl: 24px;
+  --font-size-2xl: 32px;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.7;
+
+  /* ─────────── Shadow ─────────── *
+   * 추론: Figma effectStyles 비어있음. SweetPress 카드/모달 톤에 맞춘 보수적 기본값. */
+  --shadow-sm: 0 1px 2px rgba(26, 26, 26, 0.06);
+  --shadow-md: 0 4px 12px rgba(26, 26, 26, 0.08);
+  --shadow-lg: 0 12px 32px rgba(26, 26, 26, 0.12);
+}
