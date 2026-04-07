@@ -306,4 +306,193 @@ PORT=4000
 
 ---
 
+---
+
+## 9. 전략 갱신 (2026-04-07)
+
+> 인증 도입 + 메인 페이지 실데이터화 + 합동지 본기능 승격으로 방향 전환.
+> 아래 내용이 **현재 진행 기준**이며, Section 1~8의 일부 항목은 [LEGACY] 처리.
+
+### 9.1. 레거시 정리
+
+**제거 대상** (다음 작업 시 삭제):
+- `frontend/src/features/book/` (기존 BookSpec/Book 단건 페이지)
+- `frontend/src/features/bookSpec/`
+- `frontend/src/features/credit/`
+- `frontend/src/features/order/` (기존 단순 주문 폼)
+- `frontend/src/features/template/`
+- `frontend/src/features/wizard/` (기존 4단계 — 9.3에서 재설계)
+- `frontend/src/components/ResultView.jsx`
+
+**유지 대상**:
+- `frontend/src/features/main/` (MainPage)
+- `frontend/src/features/auth/` (LoginPage, SignUpPage, storage, api)
+- `frontend/src/components/Layout.jsx`, `components/ui/*`, `components/ui/Modal`
+
+### 9.2. 신규 페이지 목록
+
+| 경로 | 페이지 | 인증 | 설명 |
+|------|--------|:----:|------|
+| `/` | MainPage | 선택 | 로그인 시 내 데이터, 비로그인 시 빈 상태 + CTA |
+| `/login`, `/signup` | Auth | X | 기존 |
+| `/wizard` | 새 책 만들기 | O | F1~F4 검수 통합 위저드 (재설계) |
+| `/projects` | MyProjects | O | 내 프로젝트 목록 (드래프트/완료) |
+| `/projects/:id/edit` | BookEdit | O | 단권 편집 (표지/내지/검수 결과) |
+| `/orders` | MyOrders | O | 내 주문 목록 |
+| `/orders/:id` | OrderDetail | O | 주문 상세 + 상태 추적 |
+| `/account` | Account | O | 계정 설정, 합동지 기여 이력 |
+| `/anthology` | Anthology 목록 | O | 내가 주최한 합동지 목록 |
+| `/anthology/new` | Anthology 생성 | O | 판형/페이지/마감일 |
+| `/anthology/:id` | Anthology 상세 | O | 대시보드 (기여자별 제출 현황) |
+| `/anthology/:id/contributors` | 기여자 관리 | O | 기여자 추가/토큰·비번 발급 |
+| `/anthology/:id/submit/:token` | 기여자 제출 | **공개** | 토큰 + 비밀번호로 접근, 회원가입 불필요 |
+
+### 9.3. 차별화 기능 보강
+
+#### F1 — DPI 자동 검수 (페이지별 위험도)
+
+기존 `{ pass, actualDpi }` 단일 응답 → **페이지별 배열로 확장**:
+
+```js
+{
+  bookId: 123,
+  summary: { ok: 40, warn: 5, danger: 2 },
+  pages: [
+    { pageNo: 1, fileName: 'p001.jpg', actualDpi: 320, level: 'ok' },
+    { pageNo: 2, fileName: 'p002.jpg', actualDpi: 220, level: 'warn' },
+    { pageNo: 3, fileName: 'p003.jpg', actualDpi: 140, level: 'danger' }
+  ]
+}
+```
+
+- `level`: `ok` (≥300) / `warn` (200~299) / `danger` (<200)
+- UI: BookEdit 페이지 그리드에 색상 뱃지 (녹/황/적), 위험 페이지 우선 표시 + 필터
+
+#### F4 — 페이지 자동 맞춤 (경고 + 승인)
+
+자동 삽입 금지. 다음 흐름:
+
+1. finalization 호출 직전 backend가 부족분 계산
+2. 부족하면 frontend에 `{ needFill: 2, suggested: 'blank' }` 응답
+3. 프론트가 모달 표시: "페이지 수가 N장 부족합니다. 빈 페이지를 추가하시겠습니까?"
+4. 사용자 승인 시 contents 추가 → finalization 재호출
+5. BookEdit 상단에 **영구 경고 배너**: "현재 N페이지, 최소 M페이지 필요"
+
+#### F5 — 합동지 (본기능 승격)
+
+기존 "확장 방향" → **본기능**으로 승격. 별도 도메인으로 구현.
+
+**대시보드 표시 항목** (기여자별):
+- 이름 / 할당 페이지 수
+- 제출 여부 (미제출/제출/검수실패)
+- 마지막 제출 시각
+- 평균 DPI / 최저 DPI / DPI 등급 (ok/warn/danger)
+- 안전영역 통과 여부
+- 수동 액션: 비밀번호 재발급, 토큰 재발급, 강제 제거
+
+### 9.4. DB 스키마 변경
+
+#### 9.4.1. 기존 모델 보강 (가장 큰 누락)
+
+```prisma
+model Project {
+  // ... 기존 필드
+  userId Int       // 신규 FK
+  user   User @relation(fields: [userId], references: [id])
+}
+
+model Order {
+  // ... 기존 필드
+  userId Int       // 신규 FK
+  user   User @relation(fields: [userId], references: [id])
+}
+```
+
+#### 9.4.2. 합동지 신규 모델
+
+```prisma
+model Anthology {
+  id          Int       @id @default(autoincrement())
+  ownerId     Int
+  owner       User      @relation(fields: [ownerId], references: [id])
+  title       String
+  deadline    DateTime?
+  bookSpecUid String
+  pageMin     Int
+  pageMax     Int
+  status      String    @default("OPEN")  // OPEN | CLOSED | FINALIZED
+  contributors Contributor[]
+  createdAt   DateTime  @default(now())
+}
+
+model Contributor {
+  id                 Int       @id @default(autoincrement())
+  anthologyId        Int
+  anthology          Anthology @relation(fields: [anthologyId], references: [id])
+  userId             Int?      // 회원이면 매핑, 비회원이면 null
+  name               String
+  assignedPages      Int
+  inviteToken        String    @unique  // URL 식별자
+  accessPasswordHash String    // bcrypt 해시
+  status             String    @default("PENDING")  // PENDING | SUBMITTED | REJECTED
+  lastSubmittedAt    DateTime?
+  submissions        ContributorSubmission[]
+  createdAt          DateTime  @default(now())
+}
+
+model ContributorSubmission {
+  id            Int       @id @default(autoincrement())
+  contributorId Int
+  contributor   Contributor @relation(fields: [contributorId], references: [id])
+  fileName      String
+  pageCount     Int
+  avgDpi        Int
+  minDpi        Int
+  dpiLevel      String    // ok | warn | danger
+  bleedSafe     Boolean
+  uploadedAt    DateTime  @default(now())
+}
+```
+
+### 9.5. 합동지 기여자 인증 흐름
+
+회원/비회원 모두 접근 가능한 **링크 + 비밀번호 방식** (전화번호 X, 회원가입 X):
+
+1. 주최자가 `/anthology/:id/contributors`에서 기여자 추가
+   - backend가 `inviteToken` (랜덤 32자) 생성 + `accessPassword` 자동 생성 (8자) → bcrypt 해시 저장
+   - 평문 비밀번호는 1회만 화면에 표시 (주최자가 직접 전달)
+2. 기여자는 `/anthology/:id/submit/:token`에 접속
+   - 페이지에서 비밀번호 입력 폼
+   - backend `POST /api/anthology/:id/submit/:token/auth` → bcrypt 검증 → 단기 JWT 발급 (1h)
+3. JWT로 원고 업로드 + 검수 결과 확인
+4. 주최자는 언제든 토큰/비밀번호 재발급 가능
+
+**보안 규칙**:
+- 토큰 검증 엔드포인트에 rate limit (IP당 분당 5회)
+- bcrypt cost factor 10 이상
+- 단기 JWT는 별도 secret (`ANTHOLOGY_JWT_SECRET`)
+- 비밀번호 평문 저장/로깅 절대 금지
+
+### 9.6. 갱신된 Phase 순서
+
+기존 Phase 1~6은 [LEGACY]. 신규 Phase A~E를 우선 진행.
+
+| Phase | 내용 | 의존성 |
+|:-----:|------|--------|
+| **A** | 인증 인프라 — Project/Order에 userId FK 추가, 기존 라우트 인증 미들웨어 적용, JWT 검증 미들웨어 | — |
+| **B** | 메인 페이지 실데이터 — MainPage 더미 제거, 빈 상태 UI (Figma 디자인 시스템 기반) | A |
+| **C** | 내 작업/주문 페이지 — MyProjects, MyOrders, OrderDetail | A, B |
+| **D** | Wizard 재설계 + F1/F4 검수 — `/wizard`, BookEdit, 페이지별 DPI 뱃지, 경고 모달 | A, C |
+| **E** | 합동지 본기능 — 9.4.2 스키마 + 9.5 인증 흐름 + 대시보드 + 기여자 제출 페이지 | A, D |
+
+### 9.7. 환경 변수 추가
+
+```
+JWT_SECRET=...                  # 기존
+ANTHOLOGY_JWT_SECRET=...        # 신규 — 기여자 단기 JWT
+BCRYPT_ROUNDS=10                # 신규
+```
+
+---
+
 **문서 종료**
