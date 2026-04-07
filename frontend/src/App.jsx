@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import MainPage from './features/main/MainPage';
+import LoginPage from './features/auth/LoginPage';
+import SignUpPage from './features/auth/SignUpPage';
 import BookListPage from './features/book/BookListPage';
 import BookCreatePage from './features/book/BookCreatePage';
 import BookDetailPage from './features/book/BookDetailPage';
@@ -18,6 +20,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<MainPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
         <Route element={<Layout />}>
           <Route path="/books" element={<BookListPage />} />
           <Route path="/books/new" element={<BookCreatePage />} />

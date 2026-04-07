@@ -1,0 +1,22 @@
+@import './LoginPage.css';
+
+.auth-terms {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+}
+
+.auth-terms-checkbox {
+  width: 18px;
+  height: 18px;
+  border: var(--border-hairline) solid #b3b3b3;
+  border-radius: 4px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.auth-terms-text {
+  font-size: 13px;
+  color: var(--color-ink-secondary);
+}
