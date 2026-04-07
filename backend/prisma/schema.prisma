@@ -36,7 +36,7 @@ model Project {
   userId       Int?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
-  lastEditedAt DateTime @updatedAt
+  lastEditedAt DateTime? @updatedAt
 
   user   User?   @relation(fields: [userId], references: [id])
   orders Order[]
@@ -71,16 +71,20 @@ model Order {
 
 // 다인 합본 (Anthology)
 model Anthology {
-  id          Int       @id @default(autoincrement())
-  ownerId     Int
-  owner       User      @relation("AnthologyOwner", fields: [ownerId], references: [id])
-  title       String
-  bookSpecUid String
-  deadline    DateTime?
-  status      String    @default("RECRUITING")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  contributors Contributor[]
+  id               Int       @id @default(autoincrement())
+  ownerId          Int
+  owner            User      @relation("AnthologyOwner", fields: [ownerId], references: [id])
+  title            String
+  bookSpecUid      String
+  description      String?   @db.Text
+  coverTemplateUid String?
+  coverFrontPhoto  String?
+  coverBackPhoto   String?
+  deadline         DateTime?
+  status           String    @default("RECRUITING")
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  contributors     Contributor[]
 
   @@index([ownerId])
 }
@@ -88,15 +92,18 @@ model Anthology {
 model Contributor {
   id             Int       @id @default(autoincrement())
   anthologyId    Int
-  userId         Int
+  userId         Int?
   handle         String?
   allocatedPages Int       @default(0)
   status         String    @default("PENDING")
+  inviteToken    String    @unique
+  deadline       DateTime?
+  tokenUsedAt    DateTime?
   anthology      Anthology @relation(fields: [anthologyId], references: [id])
-  user           User      @relation(fields: [userId], references: [id])
+  user           User?     @relation(fields: [userId], references: [id])
   submissions    ContributorSubmission[]
 
-  @@unique([anthologyId, userId])
+  @@index([anthologyId])
   @@index([userId])
 }
 
@@ -104,6 +111,9 @@ model ContributorSubmission {
   id            Int         @id @default(autoincrement())
   contributorId Int
   fileName      String
+  storedPath    String
+  mimeType      String?
+  sizeBytes     Int?
   dpi           Int?
   createdAt     DateTime    @default(now())
   contributor   Contributor @relation(fields: [contributorId], references: [id])

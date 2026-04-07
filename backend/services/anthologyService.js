@@ -1,6 +1,11 @@
-// 합본(Anthology) 조회 서비스
-// 참조: prisma/schema.prisma Anthology / Contributor 모델
+// 합본(Anthology) 서비스
+// 참조: prisma/schema.prisma Anthology / Contributor / ContributorSubmission
+//       .claude/rules/00-workflow.md (API 호출 순서)
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const db = require('./db');
+const orderService = require('./orderService');
+const anthologyFlowService = require('./anthologyFlowService');
 
 const anthologyService = {
   // 내가 소유(주최)한 합본 목록 (마감일 빠른 순)
@@ -16,9 +21,7 @@ const anthologyService = {
         deadline: true,
         status: true,
         createdAt: true,
-        _count: {
-          select: { contributors: true },
-        },
+        _count: { select: { contributors: true } },
       },
       orderBy: [
         { deadline: 'asc' },
@@ -49,9 +52,7 @@ const anthologyService = {
           },
         },
       },
-      orderBy: [
-        { anthology: { deadline: 'asc' } },
-      ],
+      orderBy: [{ anthology: { deadline: 'asc' } }],
     });
 
     return rows.map((c) => ({
@@ -63,6 +64,219 @@ const anthologyService = {
         status: c.status,
       },
     }));
+  },
+
+  // 합본 생성
+  async create(ownerId, { title, description, bookSpecUid, deadline }) {
+    return db.anthology.create({
+      data: {
+        ownerId,
+        title,
+        description: description ?? null,
+        bookSpecUid,
+        deadline: deadline ? new Date(deadline) : null,
+      },
+    });
+  },
+
+  // 합본 상세
+  async getById(id) {
+    return db.anthology.findUnique({
+      where: { id },
+      include: {
+        contributors: {
+          include: { _count: { select: { submissions: true } } },
+        },
+        _count: { select: { contributors: true } },
+      },
+    });
+  },
+
+  // 표지 정보 업데이트 (주최자 전용)
+  async updateCover(id, ownerId, { templateUid, frontPhoto, backPhoto }) {
+    const anthology = await db.anthology.findUnique({ where: { id } });
+    if (!anthology) {
+      const err = new Error('ANTHOLOGY_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (anthology.ownerId !== ownerId) {
+      const err = new Error('FORBIDDEN');
+      err.statusCode = 403;
+      throw err;
+    }
+    return db.anthology.update({
+      where: { id },
+      data: {
+        coverTemplateUid: templateUid,
+        coverFrontPhoto: frontPhoto,
+        coverBackPhoto: backPhoto ?? null,
+      },
+    });
+  },
+
+  // contributor 추가 (초대)
+  async addContributor(anthologyId, ownerId, { handle, allocatedPages, deadline }) {
+    const anthology = await db.anthology.findUnique({ where: { id: anthologyId } });
+    if (!anthology) {
+      const err = new Error('ANTHOLOGY_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (anthology.ownerId !== ownerId) {
+      const err = new Error('FORBIDDEN');
+      err.statusCode = 403;
+      throw err;
+    }
+    const inviteToken = crypto.randomBytes(8).toString('hex');
+    return db.contributor.create({
+      data: {
+        anthologyId,
+        userId: null,
+        handle: handle ?? null,
+        allocatedPages: allocatedPages ?? 0,
+        deadline: deadline ? new Date(deadline) : null,
+        inviteToken,
+      },
+    });
+  },
+
+  // contributor 목록 (주최자 전용)
+  async listContributors(anthologyId, ownerId) {
+    const anthology = await db.anthology.findUnique({ where: { id: anthologyId } });
+    if (!anthology) {
+      const err = new Error('ANTHOLOGY_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (anthology.ownerId !== ownerId) {
+      const err = new Error('FORBIDDEN');
+      err.statusCode = 403;
+      throw err;
+    }
+    return db.contributor.findMany({
+      where: { anthologyId },
+      include: { _count: { select: { submissions: true } } },
+      orderBy: { id: 'asc' },
+    });
+  },
+
+  // contributor 인증 (초대 토큰 + handle)
+  async authContributor(token, handle) {
+    const contributor = await db.contributor.findUnique({ where: { inviteToken: token } });
+    if (!contributor) {
+      const err = new Error('INVALID_TOKEN');
+      err.statusCode = 401;
+      throw err;
+    }
+    if (contributor.handle && contributor.handle !== handle) {
+      const err = new Error('HANDLE_MISMATCH');
+      err.statusCode = 401;
+      throw err;
+    }
+    await db.contributor.update({
+      where: { id: contributor.id },
+      data: { tokenUsedAt: new Date() },
+    });
+    const jwtToken = jwt.sign(
+      {
+        contributorId: contributor.id,
+        anthologyId: contributor.anthologyId,
+        handle: contributor.handle,
+      },
+      process.env.CONTRIBUTOR_JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    return { token: jwtToken, contributor };
+  },
+
+  // contributor 제출물 추가
+  async addSubmission(contributorId, { fileName, storedPath, mimeType, sizeBytes, dpi }) {
+    return db.contributorSubmission.create({
+      data: {
+        contributorId,
+        fileName,
+        storedPath,
+        mimeType: mimeType ?? null,
+        sizeBytes: sizeBytes ?? null,
+        dpi: dpi ?? null,
+      },
+    });
+  },
+
+  // contributor 제출물 목록
+  async listSubmissions(contributorId) {
+    return db.contributorSubmission.findMany({
+      where: { contributorId },
+      orderBy: { createdAt: 'asc' },
+    });
+  },
+
+  // 합본 최종화 — Lazy Bind 실행
+  async finalize(anthologyId, ownerId) {
+    const anthology = await db.anthology.findUnique({ where: { id: anthologyId } });
+    if (!anthology) {
+      const err = new Error('ANTHOLOGY_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (anthology.ownerId !== ownerId) {
+      const err = new Error('FORBIDDEN');
+      err.statusCode = 403;
+      throw err;
+    }
+    const contributors = await db.contributor.findMany({
+      where: { anthologyId },
+      orderBy: { id: 'asc' },
+    });
+    const submissions = await db.contributorSubmission.findMany({
+      where: { contributorId: { in: contributors.map((c) => c.id) } },
+      orderBy: { id: 'asc' },
+    });
+
+    const { bookUid, estimate } = await anthologyFlowService.runFinalize(
+      anthology,
+      contributors,
+      submissions
+    );
+
+    const updated = await db.anthology.update({
+      where: { id: anthologyId },
+      data: { status: 'FINALIZED' },
+    });
+
+    return { anthology: updated, bookUid, estimate };
+  },
+
+  // 합본 주문 생성
+  async createOrder(anthologyId, ownerId, { quantity, shipping }) {
+    const anthology = await db.anthology.findUnique({ where: { id: anthologyId } });
+    if (!anthology) {
+      const err = new Error('ANTHOLOGY_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (anthology.ownerId !== ownerId) {
+      const err = new Error('FORBIDDEN');
+      err.statusCode = 403;
+      throw err;
+    }
+    if (anthology.status !== 'FINALIZED') {
+      const err = new Error('NOT_FINALIZED');
+      err.statusCode = 400;
+      throw err;
+    }
+    const bookUid = anthologyFlowService.getBookUid(anthologyId);
+    if (!bookUid) {
+      const err = new Error('BOOK_UID_NOT_CACHED');
+      err.statusCode = 409;
+      throw err;
+    }
+    return orderService.create({
+      items: [{ bookUid, quantity }],
+      shipping,
+      externalRef: `anthology:${anthologyId}`,
+    });
   },
 };
 
