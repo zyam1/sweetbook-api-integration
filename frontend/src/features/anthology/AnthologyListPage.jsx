@@ -8,20 +8,25 @@ import './AnthologyListPage.css';
 export default function AnthologyListPage() {
   const [role, setRole] = useState('owner');
   const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let alive = true;
-    setLoading(true);
-    setError(null);
     listAnthologies(role)
       .then((data) => {
         if (!alive) return;
         setItems(Array.isArray(data) ? data : data?.items || []);
+        setError(null);
       })
-      .catch((e) => alive && setError(e?.response?.data?.error || e.message))
-      .finally(() => alive && setLoading(false));
+      .catch((e) => {
+        if (!alive) return;
+        setError(e?.response?.data?.error || e.message);
+      })
+      .finally(() => {
+        if (!alive) return;
+        setLoading(false);
+      });
     return () => { alive = false; };
   }, [role]);
 
@@ -36,8 +41,8 @@ export default function AnthologyListPage() {
       </div>
 
       <div className="ant-toggle">
-        <button className={role === 'owner' ? 'active' : ''} onClick={() => setRole('owner')}>내가 주최한</button>
-        <button className={role === 'contributor' ? 'active' : ''} onClick={() => setRole('contributor')}>참여 중인</button>
+        <button className={role === 'owner' ? 'active' : ''} onClick={() => { setLoading(true); setError(null); setRole('owner'); }}>내가 주최한</button>
+        <button className={role === 'contributor' ? 'active' : ''} onClick={() => { setLoading(true); setError(null); setRole('contributor'); }}>참여 중인</button>
       </div>
 
       {loading && <p className="ant-sub">불러오는 중...</p>}

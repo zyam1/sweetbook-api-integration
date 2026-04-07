@@ -28,7 +28,7 @@ export default function AnthologyDashboardPage() {
     if (!window.confirm('정말 이 합동지를 삭제하시겠습니까? 모든 참여자와 제출물이 함께 삭제되며 되돌릴 수 없습니다.')) return;
     try {
       await deleteAnthology(id);
-      navigate('/');
+      navigate('/anthology');
     } catch (e) {
       setError(e?.response?.data?.error || e.message);
     }
