@@ -8,7 +8,7 @@ import './ContributorAuthPage.css';
 export default function ContributorAuthPage() {
   const { token } = useParams();
   const navigate = useNavigate();
-  const [handle, setHandle] = useState('');
+  const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
@@ -17,7 +17,7 @@ export default function ContributorAuthPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await contributorAuth(token, handle);
+      await contributorAuth(token, password);
       navigate(`/c/${token}/upload`);
     } catch (err) {
       setError(err?.response?.data?.error || err.message);
@@ -31,17 +31,18 @@ export default function ContributorAuthPage() {
       <div className="ant-auth-card">
         <div className="ant-auth-icon">📖</div>
         <h1>참여자 인증</h1>
-        <p className="ant-sub">합동지에 초대되었어요. 핸들을 입력해 본인 확인을 해주세요.</p>
+        <p className="ant-sub">합동지에 초대되었어요. 비밀번호를 입력해 입장하세요.</p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           <div className="ant-field">
-            <label>핸들</label>
+            <label>비밀번호</label>
             <input
               className="ant-input"
-              value={handle}
-              onChange={(e) => setHandle(e.target.value)}
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
-              placeholder="@misun"
+              placeholder="비밀번호 입력"
             />
           </div>
 
@@ -57,7 +58,7 @@ export default function ContributorAuthPage() {
           </button>
         </form>
 
-        <p className="ant-sub-sm">이 토큰은 1회 인증으로 사용되며 마감 시 만료됩니다.</p>
+        <p className="ant-sub-sm">이 링크는 마감 시 만료됩니다.</p>
       </div>
     </div>
   );

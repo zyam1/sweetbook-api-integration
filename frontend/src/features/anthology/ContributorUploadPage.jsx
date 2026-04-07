@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { submitContribution, listMySubmissions, getContributorToken, getContribDashboard } from './api';
+import { submitContribution, listMySubmissions, getContributorToken, getContribDashboard, updateMyHandle } from './api';
 import './anthology.css';
 import './ContributorUploadPage.css';
 
@@ -13,6 +13,9 @@ export default function ContributorUploadPage() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
   const [dashboard, setDashboard] = useState(null);
+  const [handleInput, setHandleInput] = useState('');
+  const [handleSaving, setHandleSaving] = useState(false);
+  const [handleMsg, setHandleMsg] = useState(null);
 
   const load = () => {
     listMySubmissions()
@@ -27,10 +30,30 @@ export default function ContributorUploadPage() {
     }
     load();
     getContribDashboard()
-      .then((d) => setDashboard(d))
+      .then((d) => {
+        setDashboard(d);
+        const h = d?.handle || d?.me?.handle || d?.contributor?.handle || '';
+        setHandleInput(h);
+      })
       .catch(() => {});
     // eslint-disable-next-line
   }, [token]);
+
+  const handleSaveHandle = async () => {
+    if (!handleInput.trim()) return;
+    setHandleSaving(true);
+    setHandleMsg(null);
+    try {
+      await updateMyHandle(handleInput.trim());
+      setHandleMsg('저장되었습니다');
+      const d = await getContribDashboard();
+      setDashboard(d);
+    } catch (e) {
+      setHandleMsg(e?.response?.data?.error || e.message);
+    } finally {
+      setHandleSaving(false);
+    }
+  };
 
   const handleFiles = async (files) => {
     if (!files || !files.length) return;
@@ -75,6 +98,27 @@ export default function ContributorUploadPage() {
           <p className="ant-sub" style={{ marginTop: 8 }}>
             마감일: {dashboard.deadline || dashboard.anthology?.deadline || '-'} · 내 할당 페이지: {dashboard.allocatedPages ?? dashboard.me?.allocatedPages ?? 0}p · 내 제출: {dashboard.submissionCount ?? dashboard.me?.submissionCount ?? submissions.length}건
           </p>
+          <div className="ant-field" style={{ marginTop: 12 }}>
+            <label>내 이름</label>
+            <div className="ant-row" style={{ gap: 8, alignItems: 'center' }}>
+              <input
+                className="ant-input"
+                value={handleInput}
+                onChange={(e) => setHandleInput(e.target.value)}
+                placeholder="이름 입력"
+                style={{ flex: 1 }}
+              />
+              <button
+                type="button"
+                className="ant-btn ant-btn-primary"
+                onClick={handleSaveHandle}
+                disabled={handleSaving}
+              >
+                {handleSaving ? '저장 중...' : '저장'}
+              </button>
+            </div>
+            {handleMsg && <p className="ant-sub" style={{ marginTop: 6 }}>{handleMsg}</p>}
+          </div>
         </div>
       )}
 

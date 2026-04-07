@@ -86,8 +86,8 @@ router.post('/', authRequired, async (req, res, next) => {
 // contributor 인증 (인증 없음)
 router.post('/contrib/auth', async (req, res, next) => {
   try {
-    const { token, handle } = req.body || {};
-    const data = await anthologyService.authContributor(token, handle);
+    const { token, password } = req.body || {};
+    const data = await anthologyService.authContributor(token, password);
     res.json(data);
   } catch (err) {
     next(err);
@@ -138,6 +138,17 @@ router.get('/contrib/me/dashboard', contributorAuth, async (req, res, next) => {
   }
 });
 
+// contributor 본인 이름 수정
+router.patch('/contrib/me/handle', contributorAuth, async (req, res, next) => {
+  try {
+    const { handle } = req.body || {};
+    const data = await anthologyService.updateMyHandle(req.contributor.contributorId, handle);
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // 합본 상세 조회 (소유자만)
 router.get('/:id', authRequired, async (req, res, next) => {
   try {
@@ -149,6 +160,17 @@ router.get('/:id', authRequired, async (req, res, next) => {
     if (data.ownerId !== req.user.id) {
       return res.status(403).json({ error: 'FORBIDDEN' });
     }
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 합본 삭제 (주최자 전용)
+router.delete('/:id', authRequired, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const data = await anthologyService.remove(id, req.user.id);
     res.json(data);
   } catch (err) {
     next(err);

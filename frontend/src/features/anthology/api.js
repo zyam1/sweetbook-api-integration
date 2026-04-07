@@ -52,10 +52,22 @@ export async function orderAnthology(id, payload) {
   return data;
 }
 
+export async function deleteAnthology(id) {
+  const { data } = await client.delete(`/anthology/${id}`);
+  return data;
+}
+
 // 참여자 인증/제출 (별도 JWT)
-export async function contributorAuth(token, handle) {
-  const { data } = await client.post('/anthology/contrib/auth', { token, handle });
+export async function contributorAuth(token, password) {
+  const { data } = await client.post('/anthology/contrib/auth', { token, password });
   if (data?.token) setContributorToken(data.token);
+  return data;
+}
+
+export async function updateMyHandle(handle) {
+  const { data } = await client.patch('/anthology/contrib/me/handle', { handle }, {
+    headers: contribHeaders(),
+  });
   return data;
 }
 

@@ -2,6 +2,8 @@
 // 참조: prisma/schema.prisma Anthology / Contributor / ContributorSubmission
 //       .claude/rules/00-workflow.md (API 호출 순서)
 const crypto = require('crypto');
+const fs = require('fs');
+const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('./db');
@@ -109,7 +111,7 @@ const anthologyService = {
 
   // 합본 상세
   async getById(id) {
-    return db.anthology.findUnique({
+    const result = await db.anthology.findUnique({
       where: { id },
       include: {
         contributors: {
@@ -118,6 +120,8 @@ const anthologyService = {
         _count: { select: { contributors: true } },
       },
     });
+    if (result) delete result.invitePasswordHash;
+    return result;
   },
 
   // 표지 정보 업데이트 (주최자 전용)
@@ -279,16 +283,25 @@ const anthologyService = {
     };
   },
 
-  // contributor 인증 (초대 토큰 + handle)
-  async authContributor(token, handle) {
-    const contributor = await db.contributor.findUnique({ where: { inviteToken: token } });
+  // contributor 인증 (초대 토큰 + 비밀번호)
+  async authContributor(token, password) {
+    const contributor = await db.contributor.findUnique({
+      where: { inviteToken: token },
+      include: { anthology: true },
+    });
     if (!contributor) {
       const err = new Error('INVALID_TOKEN');
       err.statusCode = 401;
       throw err;
     }
-    if (contributor.handle && contributor.handle !== handle) {
-      const err = new Error('HANDLE_MISMATCH');
+    if (!contributor.anthology?.invitePasswordHash) {
+      const err = new Error('PASSWORD_NOT_SET');
+      err.statusCode = 401;
+      throw err;
+    }
+    const ok = await bcrypt.compare(password ?? '', contributor.anthology.invitePasswordHash);
+    if (!ok) {
+      const err = new Error('INVALID_PASSWORD');
       err.statusCode = 401;
       throw err;
     }
@@ -306,6 +319,18 @@ const anthologyService = {
       { expiresIn: '7d' }
     );
     return { token: jwtToken, contributor };
+  },
+
+  async updateMyHandle(contributorId, handle) {
+    if (!handle || !String(handle).trim()) {
+      const err = new Error('HANDLE_REQUIRED');
+      err.statusCode = 400;
+      throw err;
+    }
+    return db.contributor.update({
+      where: { id: contributorId },
+      data: { handle: String(handle).trim() },
+    });
   },
 
   // contributor 제출물 추가
@@ -395,6 +420,50 @@ const anthologyService = {
       shipping,
       externalRef: `anthology:${anthologyId}`,
     });
+  },
+
+  // 합본 삭제 (주최자 전용)
+  async remove(id, ownerId) {
+    const anthology = await db.anthology.findUnique({ where: { id } });
+    if (!anthology) {
+      const err = new Error('ANTHOLOGY_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (anthology.ownerId !== ownerId) {
+      const err = new Error('FORBIDDEN');
+      err.statusCode = 403;
+      throw err;
+    }
+    const linkedOrder = await db.order.findFirst({
+      where: { externalRef: `anthology:${id}` },
+    });
+    if (linkedOrder) {
+      const err = new Error('ORDER_EXISTS');
+      err.statusCode = 409;
+      throw err;
+    }
+    await db.$transaction(async (tx) => {
+      const contributors = await tx.contributor.findMany({
+        where: { anthologyId: id },
+        select: { id: true },
+      });
+      const contributorIds = contributors.map((c) => c.id);
+      if (contributorIds.length > 0) {
+        await tx.contributorSubmission.deleteMany({
+          where: { contributorId: { in: contributorIds } },
+        });
+      }
+      await tx.contributor.deleteMany({ where: { anthologyId: id } });
+      await tx.anthology.delete({ where: { id } });
+    });
+    try {
+      const dir = path.join(__dirname, '..', 'uploads', 'anthology', String(id));
+      fs.rmSync(dir, { recursive: true, force: true });
+    } catch (e) {
+      console.warn('[anthology.remove] uploads 디렉터리 삭제 실패', e.message);
+    }
+    return { ok: true };
   },
 };
 

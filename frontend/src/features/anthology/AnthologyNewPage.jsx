@@ -17,6 +17,7 @@ export default function AnthologyNewPage() {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    password: "",
     bookSpecUid: "",
     contentTemplateUid: "",
   });
@@ -57,7 +58,7 @@ export default function AnthologyNewPage() {
   const update = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
   const canNext = () => {
-    if (step === 0) return form.title.trim().length > 0;
+    if (step === 0) return form.title.trim().length > 0 && form.password.trim().length > 0;
     if (step === 1) return !!form.bookSpecUid;
     if (step === 2) return !!form.contentTemplateUid;
     return true;
@@ -70,6 +71,7 @@ export default function AnthologyNewPage() {
       const created = await createAnthology({
         title: form.title,
         description: form.description,
+        password: form.password,
         bookSpecUid: form.bookSpecUid,
         contentTemplateUid: form.contentTemplateUid,
       });
@@ -137,6 +139,20 @@ export default function AnthologyNewPage() {
                 onChange={(e) => update("description", e.target.value)}
                 placeholder="어떤 책인가요?"
               />
+            </div>
+            <div className="ant-field">
+              <label>참여 비밀번호</label>
+              <input
+                className="ant-input"
+                type="password"
+                value={form.password}
+                onChange={(e) => update("password", e.target.value)}
+                placeholder="참여자가 입장할 때 사용할 비밀번호"
+                required
+              />
+              <p className="ant-sub" style={{ marginTop: 6 }}>
+                참여자가 링크로 입장할 때 입력할 비밀번호입니다
+              </p>
             </div>
           </div>
         )}

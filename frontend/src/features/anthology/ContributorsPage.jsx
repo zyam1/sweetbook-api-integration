@@ -25,7 +25,6 @@ export default function ContributorsPage() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!form.name.trim()) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -54,13 +53,13 @@ export default function ContributorsPage() {
       <div className="ant-row-between">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <h1>참여자 관리</h1>
-          <p className="ant-sub">토큰 링크를 발급해 참여자를 초대하세요. 토큰은 1회 인증으로 사용됩니다.</p>
+          <p className="ant-sub">링크를 발급해 참여자를 초대하세요. 참여자는 링크와 비밀번호로 입장합니다.</p>
         </div>
         <Link to={`/anthology/${id}`} className="ant-btn">대시보드로</Link>
       </div>
 
       <div className="ant-card">
-        <h2>새 토큰 발급</h2>
+        <h2>새 링크 발급</h2>
         <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
           <div className="ant-row" style={{ alignItems: 'flex-end' }}>
             <div className="ant-field" style={{ flex: 2 }}>
@@ -69,8 +68,7 @@ export default function ContributorsPage() {
                 className="ant-input"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="예: 김미선"
-                required
+                placeholder="예: 김미선 (선택)"
               />
             </div>
             <div className="ant-field" style={{ flex: 3 }}>
@@ -90,7 +88,7 @@ export default function ContributorsPage() {
       </div>
 
       <div className="ant-card">
-        <h2>발급된 토큰</h2>
+        <h2>발급된 링크</h2>
         {loading && <p className="ant-sub" style={{ marginTop: 12 }}>불러오는 중...</p>}
         {error && <p className="ant-error" style={{ marginTop: 12 }}>{error}</p>}
         {!loading && contributors.length === 0 ? (

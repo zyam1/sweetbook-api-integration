@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { getAnthology, listContributors, ownerUploadForContributor, reorderContributors } from './api';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { deleteAnthology, getAnthology, listContributors, ownerUploadForContributor, reorderContributors } from './api';
 import FinalizeModal from './FinalizeModal';
 import './anthology.css';
 import './AnthologyDashboardPage.css';
@@ -8,6 +8,7 @@ import './AnthologyDashboardPage.css';
 // Figma: SweetPress / Anthology / Dashboard (:id) (node 112:60)
 export default function AnthologyDashboardPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [anthology, setAnthology] = useState(null);
   const [contributors, setContributors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +22,16 @@ export default function AnthologyDashboardPage() {
     listContributors(id)
       .then((c) => setContributors(Array.isArray(c) ? c : c?.items || []))
       .catch(() => {});
+  };
+
+  const handleDelete = async () => {
+    if (!window.confirm('정말 이 합동지를 삭제하시겠습니까? 모든 참여자와 제출물이 함께 삭제되며 되돌릴 수 없습니다.')) return;
+    try {
+      await deleteAnthology(id);
+      navigate('/');
+    } catch (e) {
+      setError(e?.response?.data?.error || e.message);
+    }
   };
 
   const handleDragStart = (idx) => setDragIndex(idx);
@@ -226,6 +237,25 @@ export default function AnthologyDashboardPage() {
               </li>
             </ul>
           </div>
+        </div>
+      </div>
+
+      <div className="ant-card" style={{ marginTop: 24, borderColor: '#f3b4b4' }}>
+        <div className="ant-row-between">
+          <div>
+            <h2 style={{ color: '#c0392b' }}>위험 구역</h2>
+            <p className="ant-sub" style={{ marginTop: 6 }}>
+              삭제 시 모든 참여자와 제출물이 함께 삭제됩니다. 되돌릴 수 없습니다.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="ant-btn"
+            style={{ background: '#c0392b', color: '#fff', borderColor: '#c0392b' }}
+            onClick={handleDelete}
+          >
+            합동지 삭제
+          </button>
         </div>
       </div>
 
