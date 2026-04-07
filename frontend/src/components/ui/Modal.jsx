@@ -10,16 +10,20 @@ import './Modal.css';
  * @param {string} title
  * @param {string} message
  * @param {() => void} onClose
- * @param {'info'|'error'|'success'} variant
+ * @param {'info'|'error'|'success'|'danger'} variant
  * @param {string} confirmText
+ * @param {string} cancelText
+ * @param {() => void} [onConfirm]
  */
 function Modal({
   open,
   title,
   message,
   onClose,
+  onConfirm,
   variant = 'info',
   confirmText = '확인',
+  cancelText = '취소',
 }) {
   const titleId = useId();
 
@@ -57,9 +61,24 @@ function Modal({
             </Text>
           )}
           <div className="sp-modal__actions">
-            <Button variant="primary" size="md" onClick={onClose}>
-              {confirmText}
-            </Button>
+            {onConfirm ? (
+              <>
+                <Button variant="secondary" size="md" onClick={onClose}>
+                  {cancelText}
+                </Button>
+                <Button
+                  variant={variant === 'danger' ? 'accent' : 'primary'}
+                  size="md"
+                  onClick={onConfirm}
+                >
+                  {confirmText}
+                </Button>
+              </>
+            ) : (
+              <Button variant="primary" size="md" onClick={onClose}>
+                {confirmText}
+              </Button>
+            )}
           </div>
         </div>
       </div>

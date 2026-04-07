@@ -34,6 +34,9 @@
 .sp-modal__accent--success {
   background-color: var(--color-state-success);
 }
+.sp-modal__accent--danger {
+  background-color: var(--color-state-danger);
+}
 
 .sp-modal__body {
   display: flex;
@@ -53,6 +56,9 @@
 }
 .sp-modal__title--success {
   color: var(--color-state-success);
+}
+.sp-modal__title--danger {
+  color: var(--color-state-danger);
 }
 
 .sp-modal__message {

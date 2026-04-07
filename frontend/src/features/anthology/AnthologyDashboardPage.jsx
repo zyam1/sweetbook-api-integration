@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { deleteAnthology, getAnthology, listContributors, ownerUploadForContributor, reorderContributors } from './api';
 import FinalizeModal from './FinalizeModal';
+import Modal from '../../components/ui/Modal';
 import './anthology.css';
 import './AnthologyDashboardPage.css';
 
@@ -14,6 +15,7 @@ export default function AnthologyDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFinalize, setShowFinalize] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
   const [uploadingIds, setUploadingIds] = useState(() => new Set());
   const fileInputsRef = useRef({});
@@ -25,12 +27,13 @@ export default function AnthologyDashboardPage() {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('정말 이 합동지를 삭제하시겠습니까? 모든 참여자와 제출물이 함께 삭제되며 되돌릴 수 없습니다.')) return;
     try {
       await deleteAnthology(id);
+      setShowDeleteConfirm(false);
       navigate('/anthology');
     } catch (e) {
       setError(e?.response?.data?.error || e.message);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -114,6 +117,9 @@ export default function AnthologyDashboardPage() {
         </div>
         <div className="ant-row" style={{ gap: 8 }}>
           <Link to={`/anthology/${id}/contributors`} className="ant-btn">참여자 초대</Link>
+          <button type="button" className="ant-btn" onClick={() => setShowDeleteConfirm(true)}>
+            삭제
+          </button>
           <button className="ant-btn ant-btn-primary" onClick={() => setShowFinalize(true)}>
             최종화
           </button>
@@ -240,24 +246,15 @@ export default function AnthologyDashboardPage() {
         </div>
       </div>
 
-      <div className="ant-card" style={{ marginTop: 24, borderColor: '#f3b4b4' }}>
-        <div className="ant-row-between">
-          <div>
-            <h2 style={{ color: '#c0392b' }}>위험 구역</h2>
-            <p className="ant-sub" style={{ marginTop: 6 }}>
-              삭제 시 모든 참여자와 제출물이 함께 삭제됩니다. 되돌릴 수 없습니다.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="ant-btn"
-            style={{ background: '#c0392b', color: '#fff', borderColor: '#c0392b' }}
-            onClick={handleDelete}
-          >
-            합동지 삭제
-          </button>
-        </div>
-      </div>
+      <Modal
+        open={showDeleteConfirm}
+        title="합동지 삭제"
+        message={'정말 이 합동지를 삭제하시겠습니까?\n모든 참여자와 제출물이 함께 삭제되며 되돌릴 수 없습니다.'}
+        variant="danger"
+        confirmText="삭제"
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDelete}
+      />
 
       {showFinalize && (
         <FinalizeModal
