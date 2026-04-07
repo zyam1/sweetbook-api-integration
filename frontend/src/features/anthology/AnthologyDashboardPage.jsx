@@ -166,7 +166,7 @@ export default function AnthologyDashboardPage() {
                     style={{ cursor: 'grab' }}
                   >
                     <div>
-                      <div className="name">{c.name || '이름 없음'}</div>
+                      <div className="name">{c.handle || c.name || '이름 없음'}</div>
                       <div className="meta">{c.email || `${c.submissionCount ?? 0}건 제출`}</div>
                     </div>
                     <div className="ant-row" style={{ gap: 8 }}>
