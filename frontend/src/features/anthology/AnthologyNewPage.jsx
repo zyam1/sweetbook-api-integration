@@ -80,7 +80,7 @@ export default function AnthologyNewPage() {
       for (const c of contributors) {
         if (c.name.trim()) {
           await createContributor(anthologyId, {
-            name: c.name,
+            handle: c.name,
             email: c.email,
           });
         }

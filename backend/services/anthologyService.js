@@ -77,35 +77,16 @@ const anthologyService = {
       throw err;
     }
     const invitePasswordHash = await bcrypt.hash(password, 10);
-    const user = await db.user.findUnique({
-      where: { id: ownerId },
-      select: { name: true },
-    });
-    const handle = user?.name || '주최자';
 
-    return db.$transaction(async (tx) => {
-      const anthology = await tx.anthology.create({
-        data: {
-          ownerId,
-          title,
-          description: description ?? null,
-          bookSpecUid,
-          deadline: deadline ? new Date(deadline) : null,
-          invitePasswordHash,
-        },
-      });
-      await tx.contributor.create({
-        data: {
-          anthologyId: anthology.id,
-          userId: ownerId,
-          handle,
-          allocatedPages: 0,
-          status: 'ACTIVE',
-          inviteToken: crypto.randomBytes(8).toString('hex'),
-          tokenUsedAt: new Date(),
-        },
-      });
-      return anthology;
+    return db.anthology.create({
+      data: {
+        ownerId,
+        title,
+        description: description ?? null,
+        bookSpecUid,
+        deadline: deadline ? new Date(deadline) : null,
+        invitePasswordHash,
+      },
     });
   },
 
