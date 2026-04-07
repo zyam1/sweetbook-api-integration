@@ -13,6 +13,7 @@ description: "[WHAT: Frontend 공통 컴포넌트 작성 에이전트] [WHEN: �
 
 | 순서 | 행동 | 설명 |
 |:----:|------|------|
+| 0 | **Figma 디자인 소스 참조 (필수)** | 모든 공통 컴포넌트는 SweetPress Figma 파일을 디자인 소스로 사용. URL: https://www.figma.com/design/7WJrsI7QOEOrXFP1x4LtAH/SweetPress?node-id=0-1&m=dev (fileKey: `7WJrsI7QOEOrXFP1x4LtAH`). `figma:figma-use` 스킬 선행 후 `figma:figma-implement-design`으로 조회. 사용자가 다른 Figma URL을 명시하지 않는 한 이 파일 외 다른 디자인 소스 가정 금지 |
 | 1 | **CLAUDE.md 확인** | 5.2절 Frontend 컨벤션 |
 | 2 | **기존 컴포넌트 확인** | `frontend/src/components/` 하위 기존 파일 Read |
 | 3 | **사용처 파악** | 해당 컴포넌트를 사용하는 feature 파일 확인 |
