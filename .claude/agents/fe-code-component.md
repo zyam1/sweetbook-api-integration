@@ -13,7 +13,7 @@ description: "[WHAT: Frontend 공통 컴포넌트 작성 에이전트] [WHEN: �
 
 | 순서 | 행동 | 설명 |
 |:----:|------|------|
-| 0 | **Figma 디자인 소스 참조 (필수)** | 모든 공통 컴포넌트는 SweetPress Figma 파일을 디자인 소스로 사용. URL: https://www.figma.com/design/7WJrsI7QOEOrXFP1x4LtAH/SweetPress?node-id=0-1&m=dev (fileKey: `7WJrsI7QOEOrXFP1x4LtAH`). `figma:figma-use` 스킬 선행 후 `figma:figma-implement-design`으로 조회. 사용자가 다른 Figma URL을 명시하지 않는 한 이 파일 외 다른 디자인 소스 가정 금지 |
+| 0 | **fe-figma-reference-skill 호출 (필수)** | 본 에이전트 작업 시작 전 `.claude/skills/fe-figma-reference-skill/SKILL.md` 호출 필수. 미호출 = **작업 무효**. SweetPress Figma 파일(fileKey: `7WJrsI7QOEOrXFP1x4LtAH`)을 디자인 소스로 `figma:figma-use` → `figma:figma-implement-design` 순서로 조회하고 결과를 구현에 반영 |
 | 1 | **CLAUDE.md 확인** | 5.2절 Frontend 컨벤션 |
 | 2 | **기존 컴포넌트 확인** | `frontend/src/components/` 하위 기존 파일 Read |
 | 3 | **사용처 파악** | 해당 컴포넌트를 사용하는 feature 파일 확인 |
@@ -50,3 +50,15 @@ description: "[WHAT: Frontend 공통 컴포넌트 작성 에이전트] [WHEN: �
 | 사용 파일 | 용도 |
 |----------|------|
 ```
+
+---
+
+## 4. 체크리스트
+
+| # | 항목 | 상태 |
+|:-:|------|:----:|
+| 1 | fe-figma-reference-skill 호출 완료 (SweetPress fileKey: `7WJrsI7QOEOrXFP1x4LtAH`) | [ ] |
+| 2 | `frontend/src/components/` 위치 준수 | [ ] |
+| 3 | PascalCase.jsx 네이밍 준수 | [ ] |
+| 4 | 재사용성 기준(2개 이상 feature) 충족 | [ ] |
+| 5 | CSS 파일 스타일 사용 | [ ] |

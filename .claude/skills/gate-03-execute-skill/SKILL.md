@@ -20,6 +20,7 @@ description: "[WHAT: SweetBook 코드 작성/수정 실행 - 매핑표에 따라
 | 5 | axios 새 인스턴스 생성 금지. `api/client.js` 사용 | **작업 무효** |
 | 6 | SweetBook API 호출 순서 1~10 위반 금지 | **작업 무효** |
 | 7 | 범위 초과 리팩토링/주석 추가/기능 추가 금지 | **작업 무효** |
+| 8 | 변경 파일에 `frontend/src/features/**` 또는 `frontend/src/components/*` 포함 시 **fe-figma-reference-skill** 선행 호출 필수 (fe-code-feature/fe-code-component 위임 전) | **작업 무효** |
 
 ---
 
@@ -46,6 +47,7 @@ description: "[WHAT: SweetBook 코드 작성/수정 실행 - 매핑표에 따라
 | 2 | 작업계획서(또는 Gate 1 분석) 재확인 |
 | 3 | 변경 파일별 위임 에이전트 매핑 |
 | 4 | 위임 순서 결정 (backend 먼저 → frontend) |
+| 4.5 | **frontend 작업 포함 시 fe-figma-reference-skill 선행 호출** (fe-code-feature/fe-code-component 위임 전 필수) |
 | 5 | 서브에이전트에 작업 지시 (각 에이전트의 SKILL/규칙 준수) |
 | 6 | 결과 통합 + backend↔frontend 정합성 확인 |
 | 7 | 1차 자체 검토 (CLAUDE.md ## 2.1 품질 기준 5가지) |

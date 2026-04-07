@@ -13,7 +13,7 @@ description: "[WHAT: Frontend Feature 작성 에이전트] [WHEN: React feature 
 
 | 순서 | 행동 | 설명 |
 |:----:|------|------|
-| 0 | **Figma 디자인 소스 참조 (필수)** | 모든 frontend 구현은 SweetPress Figma 파일을 디자인 소스로 사용. URL: https://www.figma.com/design/7WJrsI7QOEOrXFP1x4LtAH/SweetPress?node-id=0-1&m=dev (fileKey: `7WJrsI7QOEOrXFP1x4LtAH`). `figma:figma-use` 스킬 선행 후 `figma:figma-implement-design`으로 해당 노드 조회. 사용자가 다른 Figma URL을 명시하지 않는 한 이 파일 외 다른 디자인 소스 가정 금지 |
+| 0 | **fe-figma-reference-skill 호출 (필수)** | 본 에이전트 작업 시작 전 `.claude/skills/fe-figma-reference-skill/SKILL.md` 호출 필수. 미호출 = **작업 무효**. SweetPress Figma 파일(fileKey: `7WJrsI7QOEOrXFP1x4LtAH`)을 디자인 소스로 `figma:figma-use` → `figma:figma-implement-design` 순서로 조회하고 결과를 구현에 반영 |
 | 1 | **CLAUDE.md 확인** | 5.2절 Frontend 컨벤션 |
 | 2 | **기존 feature 패턴 확인** | `frontend/src/features/` 하위 기존 구조 Read |
 | 3 | **API 클라이언트 확인** | `frontend/src/api/client.js` Read → axios 설정 파악 |
@@ -79,4 +79,4 @@ features/{domain}/
 | 4 | ESM import/export를 사용하는가? | [ ] |
 | 5 | 대응하는 backend API가 존재하는가? | [ ] |
 | 6 | 새 페이지면 라우팅에 등록했는가? | [ ] |
-| 7 | SweetPress Figma 파일(fileKey: `7WJrsI7QOEOrXFP1x4LtAH`)을 디자인 소스로 참조했는가? | [ ] |
+| 7 | fe-figma-reference-skill을 호출하여 SweetPress Figma 파일(fileKey: `7WJrsI7QOEOrXFP1x4LtAH`)을 참조했는가? | [ ] |
