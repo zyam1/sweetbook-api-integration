@@ -30,7 +30,7 @@ export default function ContributorAuthPage() {
     <div className="ant-auth-wrap">
       <div className="ant-auth-card">
         <div className="ant-auth-icon">📖</div>
-        <h1>기여자 인증</h1>
+        <h1>참여자 인증</h1>
         <p className="ant-sub">합동지에 초대되었어요. 핸들을 입력해 본인 확인을 해주세요.</p>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>

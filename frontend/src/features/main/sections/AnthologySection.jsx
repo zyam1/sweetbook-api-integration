@@ -126,7 +126,7 @@ function AnthologySection() {
           <div className="mp-ws-head">
             <div>
               <h3 className="mp-ws-title">참여 중인 합동지</h3>
-              <p className="mp-ws-sub">기여자로 참여 {joined.length}건</p>
+              <p className="mp-ws-sub">참여자로 참여 {joined.length}건</p>
             </div>
             <Link to="/anthology" className="mp-ws-link">전체 보기 →</Link>
           </div>

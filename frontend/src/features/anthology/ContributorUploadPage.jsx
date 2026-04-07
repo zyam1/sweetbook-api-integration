@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { submitContribution, listMySubmissions, getContributorToken } from './api';
+import { submitContribution, listMySubmissions, getContributorToken, getContribDashboard } from './api';
 import './anthology.css';
 import './ContributorUploadPage.css';
 
@@ -12,6 +12,7 @@ export default function ContributorUploadPage() {
   const [submissions, setSubmissions] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
+  const [dashboard, setDashboard] = useState(null);
 
   const load = () => {
     listMySubmissions()
@@ -25,6 +26,9 @@ export default function ContributorUploadPage() {
       return;
     }
     load();
+    getContribDashboard()
+      .then((d) => setDashboard(d))
+      .catch(() => {});
     // eslint-disable-next-line
   }, [token]);
 
@@ -59,6 +63,20 @@ export default function ContributorUploadPage() {
         </div>
         <span className="ant-badge yellow">진행 중</span>
       </div>
+
+      {dashboard && (
+        <div className="ant-card">
+          <div className="ant-row-between">
+            <h2>{dashboard.title || dashboard.anthology?.title || '합동지'}</h2>
+            <span className="ant-badge lavender">
+              {dashboard.bookSpecUid || dashboard.anthology?.bookSpecUid || ''}
+            </span>
+          </div>
+          <p className="ant-sub" style={{ marginTop: 8 }}>
+            마감일: {dashboard.deadline || dashboard.anthology?.deadline || '-'} · 내 할당 페이지: {dashboard.allocatedPages ?? dashboard.me?.allocatedPages ?? 0}p · 내 제출: {dashboard.submissionCount ?? dashboard.me?.submissionCount ?? submissions.length}건
+          </p>
+        </div>
+      )}
 
       <div
         className="ant-dropzone"

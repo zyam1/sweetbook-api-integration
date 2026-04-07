@@ -26,12 +26,12 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<MainPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
         <Route path="/c/:token" element={<ContributorAuthPage />} />
         <Route path="/c/:token/upload" element={<ContributorUploadPage />} />
         <Route element={<Layout />}>
+          <Route path="/" element={<MainPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignUpPage />} />
           <Route path="/books" element={<BookListPage />} />
           <Route path="/books/new" element={<BookCreatePage />} />
           <Route path="/books/:bookUid" element={<BookDetailPage />} />

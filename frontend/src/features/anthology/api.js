@@ -52,7 +52,7 @@ export async function orderAnthology(id, payload) {
   return data;
 }
 
-// 기여자 인증/제출 (별도 JWT)
+// 참여자 인증/제출 (별도 JWT)
 export async function contributorAuth(token, handle) {
   const { data } = await client.post('/anthology/contrib/auth', { token, handle });
   if (data?.token) setContributorToken(data.token);
@@ -71,6 +71,28 @@ export async function submitContribution(file, extra = {}) {
 
 export async function listMySubmissions() {
   const { data } = await client.get('/anthology/contrib/me/submissions', {
+    headers: contribHeaders(),
+  });
+  return data;
+}
+
+export async function ownerUploadForContributor(id, cid, file, extra = {}) {
+  const form = new FormData();
+  form.append('file', file);
+  Object.entries(extra).forEach(([k, v]) => form.append(k, v));
+  const { data } = await client.post(`/anthology/${id}/contributors/${cid}/submissions`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+}
+
+export async function reorderContributors(id, orderedIds) {
+  const { data } = await client.patch(`/anthology/${id}/contributors/order`, { orderedIds });
+  return data;
+}
+
+export async function getContribDashboard() {
+  const { data } = await client.get('/anthology/contrib/me/dashboard', {
     headers: contribHeaders(),
   });
   return data;

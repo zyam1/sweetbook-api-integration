@@ -2,6 +2,7 @@
 // 참조: prisma/schema.prisma Anthology / Contributor / ContributorSubmission
 //       .claude/rules/00-workflow.md (API 호출 순서)
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const db = require('./db');
 const orderService = require('./orderService');
@@ -67,15 +68,42 @@ const anthologyService = {
   },
 
   // 합본 생성
-  async create(ownerId, { title, description, bookSpecUid, deadline }) {
-    return db.anthology.create({
-      data: {
-        ownerId,
-        title,
-        description: description ?? null,
-        bookSpecUid,
-        deadline: deadline ? new Date(deadline) : null,
-      },
+  async create(ownerId, { title, description, bookSpecUid, deadline, password }) {
+    if (!password || !String(password).trim()) {
+      const err = new Error('PASSWORD_REQUIRED');
+      err.statusCode = 400;
+      throw err;
+    }
+    const invitePasswordHash = await bcrypt.hash(password, 10);
+    const user = await db.user.findUnique({
+      where: { id: ownerId },
+      select: { name: true },
+    });
+    const handle = user?.name || '주최자';
+
+    return db.$transaction(async (tx) => {
+      const anthology = await tx.anthology.create({
+        data: {
+          ownerId,
+          title,
+          description: description ?? null,
+          bookSpecUid,
+          deadline: deadline ? new Date(deadline) : null,
+          invitePasswordHash,
+        },
+      });
+      await tx.contributor.create({
+        data: {
+          anthologyId: anthology.id,
+          userId: ownerId,
+          handle,
+          allocatedPages: 0,
+          status: 'ACTIVE',
+          inviteToken: crypto.randomBytes(8).toString('hex'),
+          tokenUsedAt: new Date(),
+        },
+      });
+      return anthology;
     });
   },
 
@@ -157,8 +185,98 @@ const anthologyService = {
     return db.contributor.findMany({
       where: { anthologyId },
       include: { _count: { select: { submissions: true } } },
-      orderBy: { id: 'asc' },
+      orderBy: [{ order: 'asc' }, { id: 'asc' }],
     });
+  },
+
+  // contributor 순서 변경 (주최자 전용)
+  async reorderContributors(anthologyId, ownerId, orderedIds) {
+    const anthology = await db.anthology.findUnique({ where: { id: anthologyId } });
+    if (!anthology) {
+      const err = new Error('ANTHOLOGY_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (anthology.ownerId !== ownerId) {
+      const err = new Error('FORBIDDEN');
+      err.statusCode = 403;
+      throw err;
+    }
+    return db.$transaction(
+      orderedIds.map((cid, idx) =>
+        db.contributor.update({
+          where: { id: cid },
+          data: { order: idx },
+        })
+      )
+    );
+  },
+
+  // 주최자 대리 업로드 (특정 contributor에 파일 추가)
+  async addOwnerSubmission(anthologyId, ownerId, contributorId, fileMeta) {
+    const anthology = await db.anthology.findUnique({ where: { id: anthologyId } });
+    if (!anthology) {
+      const err = new Error('ANTHOLOGY_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (anthology.ownerId !== ownerId) {
+      const err = new Error('FORBIDDEN');
+      err.statusCode = 403;
+      throw err;
+    }
+    const contributor = await db.contributor.findUnique({ where: { id: contributorId } });
+    if (!contributor || contributor.anthologyId !== anthologyId) {
+      const err = new Error('CONTRIBUTOR_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    const { fileName, storedPath, mimeType, sizeBytes, dpi } = fileMeta;
+    return db.contributorSubmission.create({
+      data: {
+        contributorId,
+        fileName,
+        storedPath,
+        mimeType: mimeType ?? null,
+        sizeBytes: sizeBytes ?? null,
+        dpi: dpi ?? null,
+      },
+    });
+  },
+
+  // contributor 대시보드 (참여자 관점)
+  async getContributorDashboard(contributorId) {
+    const contributor = await db.contributor.findUnique({
+      where: { id: contributorId },
+      include: {
+        anthology: {
+          select: {
+            id: true,
+            title: true,
+            bookSpecUid: true,
+            deadline: true,
+            status: true,
+          },
+        },
+        _count: { select: { submissions: true } },
+      },
+    });
+    if (!contributor) {
+      const err = new Error('CONTRIBUTOR_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    return {
+      contributor: {
+        id: contributor.id,
+        handle: contributor.handle,
+        allocatedPages: contributor.allocatedPages,
+        status: contributor.status,
+        deadline: contributor.deadline,
+      },
+      anthology: contributor.anthology,
+      submissionCount: contributor._count.submissions,
+    };
   },
 
   // contributor 인증 (초대 토큰 + handle)

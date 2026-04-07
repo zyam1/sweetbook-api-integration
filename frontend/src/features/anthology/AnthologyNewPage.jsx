@@ -44,9 +44,11 @@ export default function AnthologyNewPage() {
         params: { bookSpecUid: form.bookSpecUid, templateKind: "content" },
       })
       .then((res) => {
-        const inner = res.data?.data;
+        const inner = res.data?.data?.data ?? res.data?.data;
         setTemplates(
-          Array.isArray(inner) ? inner : inner?.data || inner?.items || [],
+          Array.isArray(inner)
+            ? inner
+            : inner?.templates || inner?.data || inner?.items || [],
         );
       })
       .catch(() => {});
@@ -72,7 +74,7 @@ export default function AnthologyNewPage() {
         contentTemplateUid: form.contentTemplateUid,
       });
       const anthologyId = created?.id || created?.anthologyId;
-      // 기여자 추가 (비어있지 않은 것만)
+      // 참여자 추가 (비어있지 않은 것만)
       for (const c of contributors) {
         if (c.name.trim()) {
           await createContributor(anthologyId, {
@@ -172,7 +174,7 @@ export default function AnthologyNewPage() {
                   className={`ant-spec-card ${form.contentTemplateUid === t.templateUid ? "selected" : ""}`}
                   onClick={() => update("contentTemplateUid", t.templateUid)}
                 >
-                  <strong>{t.name || t.templateUid}</strong>
+                  <strong>{t.templateName || t.name || t.templateUid}</strong>
                   <div className="meta">{t.category || ""}</div>
                 </div>
               ))}
@@ -182,7 +184,7 @@ export default function AnthologyNewPage() {
 
         {step === 3 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <p className="ant-sub">기여자를 추가하세요. (나중에 추가 가능)</p>
+            <p className="ant-sub">참여자를 추가하세요. (나중에 추가 가능)</p>
             {contributors.map((c, idx) => (
               <div key={idx} className="ant-row">
                 <input
@@ -213,7 +215,7 @@ export default function AnthologyNewPage() {
                 setContributors([...contributors, { name: "", email: "" }])
               }
             >
-              + 기여자 추가
+              + 참여자 추가
             </button>
           </div>
         )}

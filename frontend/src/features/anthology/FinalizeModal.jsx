@@ -49,7 +49,7 @@ export default function FinalizeModal({ anthology, onClose }) {
           <p className="ant-sub-sm" style={{ fontWeight: 600 }}>마감 전 점검</p>
           <p className="ant-success" style={{ marginTop: 6 }}>✅ 페이지 조건이 판형 범위에 맞는지 확인</p>
           <p className="ant-success">✅ 표지 이미지가 설정되어 있는지 확인</p>
-          <p className="ant-warn">⚠ 미제출 기여자는 마감 시 자동 제외됩니다</p>
+          <p className="ant-warn">⚠ 미제출 참여자는 마감 시 자동 제외됩니다</p>
         </div>
 
         <div className="ant-info-banner">

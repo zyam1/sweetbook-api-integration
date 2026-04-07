@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getAnthology, listContributors } from './api';
+import { getAnthology, listContributors, ownerUploadForContributor, reorderContributors } from './api';
 import FinalizeModal from './FinalizeModal';
 import './anthology.css';
 import './AnthologyDashboardPage.css';
@@ -13,6 +13,55 @@ export default function AnthologyDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFinalize, setShowFinalize] = useState(false);
+  const [dragIndex, setDragIndex] = useState(null);
+  const [uploadingIds, setUploadingIds] = useState(() => new Set());
+  const fileInputsRef = useRef({});
+
+  const reloadContributors = () => {
+    listContributors(id)
+      .then((c) => setContributors(Array.isArray(c) ? c : c?.items || []))
+      .catch(() => {});
+  };
+
+  const handleDragStart = (idx) => setDragIndex(idx);
+  const handleDragOver = (e) => e.preventDefault();
+  const handleDrop = (idx) => {
+    if (dragIndex === null || dragIndex === idx) return;
+    const next = [...contributors];
+    const [moved] = next.splice(dragIndex, 1);
+    next.splice(idx, 0, moved);
+    setContributors(next);
+    setDragIndex(null);
+    reorderContributors(id, next.map((c) => c.id)).catch((e) =>
+      setError(e?.response?.data?.error || e.message)
+    );
+  };
+
+  const triggerUpload = (cid) => {
+    const el = fileInputsRef.current[cid];
+    if (el) el.click();
+  };
+
+  const handleOwnerUpload = async (cid, file) => {
+    if (!file) return;
+    setUploadingIds((prev) => {
+      const next = new Set(prev);
+      next.add(cid);
+      return next;
+    });
+    try {
+      await ownerUploadForContributor(id, cid, file);
+      reloadContributors();
+    } catch (e) {
+      setError(e?.response?.data?.error || e.message);
+    } finally {
+      setUploadingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(cid);
+        return next;
+      });
+    }
+  };
 
   useEffect(() => {
     let alive = true;
@@ -49,11 +98,11 @@ export default function AnthologyDashboardPage() {
             <span className="ant-badge lavender">{anthology.status || 'DRAFT'}</span>
           </div>
           <p className="ant-sub">
-            {anthology.bookSpecUid || ''} · 페이지 {anthology.pageCount ?? 0}p · 기여자 {contributors.length}명
+            {anthology.bookSpecUid || ''} · 페이지 {anthology.pageCount ?? 0}p · 참여자 {contributors.length}명
           </p>
         </div>
         <div className="ant-row" style={{ gap: 8 }}>
-          <Link to={`/anthology/${id}/contributors`} className="ant-btn">기여자 초대</Link>
+          <Link to={`/anthology/${id}/contributors`} className="ant-btn">참여자 초대</Link>
           <button className="ant-btn ant-btn-primary" onClick={() => setShowFinalize(true)}>
             최종화
           </button>
@@ -87,22 +136,51 @@ export default function AnthologyDashboardPage() {
         }}
       >
         <div className="ant-card">
-          <h2>기여자 목록</h2>
+          <h2>참여자 목록</h2>
           {contributors.length === 0 ? (
-            <p className="ant-sub" style={{ marginTop: 12 }}>등록된 기여자가 없습니다.</p>
+            <p className="ant-sub" style={{ marginTop: 12 }}>등록된 참여자가 없습니다.</p>
           ) : (
             <ul className="ant-list">
-              {contributors.map((c) => {
+              {contributors.map((c, idx) => {
                 const done = (c.submissionCount ?? 0) > 0;
+                const cid = c.id;
+                const isUploading = uploadingIds.has(cid);
                 return (
-                  <li key={c.id || c.token}>
+                  <li
+                    key={cid || c.token}
+                    draggable
+                    onDragStart={() => handleDragStart(idx)}
+                    onDragOver={handleDragOver}
+                    onDrop={() => handleDrop(idx)}
+                    style={{ cursor: 'grab' }}
+                  >
                     <div>
                       <div className="name">{c.name || '이름 없음'}</div>
                       <div className="meta">{c.email || `${c.submissionCount ?? 0}건 제출`}</div>
                     </div>
-                    <span className={`ant-badge ${done ? 'lavender' : 'pink'}`}>
-                      {done ? '제출 완료' : '원고 미제출'}
-                    </span>
+                    <div className="ant-row" style={{ gap: 8 }}>
+                      <span className={`ant-badge ${done ? 'lavender' : 'pink'}`}>
+                        {done ? '제출 완료' : '원고 미제출'}
+                      </span>
+                      <button
+                        className="ant-btn"
+                        disabled={isUploading || !cid}
+                        onClick={() => triggerUpload(cid)}
+                      >
+                        {isUploading ? '업로드 중...' : '파일 업로드'}
+                      </button>
+                      <input
+                        ref={(el) => { if (cid) fileInputsRef.current[cid] = el; }}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          handleOwnerUpload(cid, f);
+                          e.target.value = '';
+                        }}
+                      />
+                    </div>
                   </li>
                 );
               })}

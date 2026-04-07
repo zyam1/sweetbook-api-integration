@@ -80,6 +80,7 @@ model Anthology {
   coverTemplateUid String?
   coverFrontPhoto  String?
   coverBackPhoto   String?
+  invitePasswordHash String?
   deadline         DateTime?
   status           String    @default("RECRUITING")
   createdAt        DateTime  @default(now())
@@ -95,6 +96,7 @@ model Contributor {
   userId         Int?
   handle         String?
   allocatedPages Int       @default(0)
+  order          Int       @default(0)
   status         String    @default("PENDING")
   inviteToken    String    @unique
   deadline       DateTime?
