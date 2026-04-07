@@ -4,6 +4,7 @@ import { listContributors, createContributor } from './api';
 import './anthology.css';
 import './ContributorsPage.css';
 
+// Figma: SweetPress / Anthology / Contributors (:id) (node 114:60)
 export default function ContributorsPage() {
   const { id } = useParams();
   const [contributors, setContributors] = useState([]);
@@ -42,47 +43,87 @@ export default function ContributorsPage() {
 
   return (
     <div className="ant-page">
+      <div className="ant-crumb">
+        <span>합동지</span>
+        <span className="ant-crumb-sep">›</span>
+        <Link to={`/anthology/${id}`}>대시보드</Link>
+        <span className="ant-crumb-sep">›</span>
+        <span>기여자 관리</span>
+      </div>
+
       <div className="ant-row-between">
-        <h1>기여자 관리</h1>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <h1>기여자 관리</h1>
+          <p className="ant-sub">토큰 링크를 발급해 기여자를 초대하세요. 토큰은 1회 인증으로 사용됩니다.</p>
+        </div>
         <Link to={`/anthology/${id}`} className="ant-btn">대시보드로</Link>
       </div>
 
       <div className="ant-card">
-        <h2>새 기여자 초대</h2>
-        <form onSubmit={handleCreate}>
-          <div className="ant-field">
-            <label>이름</label>
-            <input className="ant-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+        <h2>새 토큰 발급</h2>
+        <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 12 }}>
+          <div className="ant-row" style={{ alignItems: 'flex-end' }}>
+            <div className="ant-field" style={{ flex: 2 }}>
+              <label>기여자 핸들</label>
+              <input
+                className="ant-input"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="@misun"
+                required
+              />
+            </div>
+            <div className="ant-field" style={{ flex: 3 }}>
+              <label>이메일 (선택)</label>
+              <input
+                className="ant-input"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="email@example.com"
+              />
+            </div>
+            <button className="ant-btn ant-btn-pink" disabled={submitting}>
+              {submitting ? '발급 중...' : '발급'}
+            </button>
           </div>
-          <div className="ant-field">
-            <label>이메일 (선택)</label>
-            <input className="ant-input" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          </div>
-          <button className="ant-btn ant-btn-primary" disabled={submitting}>{submitting ? '발급 중...' : '초대 토큰 발급'}</button>
         </form>
       </div>
 
-      <h2>발급된 초대 링크</h2>
-      {loading && <p className="ant-sub">불러오는 중...</p>}
-      {error && <p className="ant-sub" style={{ color: '#c0392b' }}>{error}</p>}
       <div className="ant-card">
-        {contributors.length === 0 ? (
-          <p className="ant-sub">아직 기여자가 없습니다.</p>
+        <h2>발급된 토큰</h2>
+        {loading && <p className="ant-sub" style={{ marginTop: 12 }}>불러오는 중...</p>}
+        {error && <p className="ant-error" style={{ marginTop: 12 }}>{error}</p>}
+        {!loading && contributors.length === 0 ? (
+          <p className="ant-sub" style={{ marginTop: 12 }}>아직 기여자가 없습니다.</p>
         ) : (
-          <ul className="ant-list">
-            {contributors.map((c) => (
-              <li key={c.id || c.token}>
-                <div>
-                  <strong>{c.name || '이름 없음'}</strong>
-                  {c.token && (
-                    <div className="ant-sub" style={{ wordBreak: 'break-all' }}>{linkFor(c.token)}</div>
-                  )}
-                </div>
-                {c.token && (
-                  <button className="ant-btn" onClick={() => navigator.clipboard.writeText(linkFor(c.token))}>복사</button>
-                )}
-              </li>
-            ))}
+          <ul className="ant-list" style={{ marginTop: 8 }}>
+            {contributors.map((c) => {
+              const used = !!c.usedAt || !!c.authedAt;
+              return (
+                <li key={c.id || c.token}>
+                  <div>
+                    <div className="name">{c.name || '이름 없음'}</div>
+                    {c.token && (
+                      <div className="meta" style={{ wordBreak: 'break-all' }}>{linkFor(c.token)}</div>
+                    )}
+                  </div>
+                  <div className="ant-row" style={{ gap: 8 }}>
+                    <span className={`ant-badge ${used ? 'lavender' : 'yellow'}`}>
+                      {used ? '인증 완료' : '미사용'}
+                    </span>
+                    {c.token && (
+                      <button
+                        type="button"
+                        className="ant-btn ant-btn-ghost"
+                        onClick={() => navigator.clipboard.writeText(linkFor(c.token))}
+                      >
+                        복사
+                      </button>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

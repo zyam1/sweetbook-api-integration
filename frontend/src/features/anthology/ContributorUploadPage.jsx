@@ -4,6 +4,7 @@ import { submitContribution, listMySubmissions, getContributorToken } from './ap
 import './anthology.css';
 import './ContributorUploadPage.css';
 
+// Figma: SweetPress / Submit / Upload (:token) (node 115:60)
 export default function ContributorUploadPage() {
   const { token } = useParams();
   const navigate = useNavigate();
@@ -44,42 +45,71 @@ export default function ContributorUploadPage() {
   };
 
   return (
-    <div className="ant-auth-wrap" style={{ alignItems: 'flex-start' }}>
-      <div className="ant-auth-card" style={{ maxWidth: 640 }}>
-        <h1>사진 제출</h1>
-        <p className="ant-sub">합동지에 사용할 사진을 업로드하세요.</p>
+    <div className="ant-page">
+      <div className="ant-crumb">
+        <span>합동지</span>
+        <span className="ant-crumb-sep">›</span>
+        <span>원고 업로드</span>
+      </div>
 
-        <div
-          className="ant-dropzone"
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => e.preventDefault()}
-          onDrop={(e) => {
-            e.preventDefault();
-            handleFiles(Array.from(e.dataTransfer.files));
-          }}
-        >
-          {uploading ? '업로드 중...' : '클릭하거나 파일을 여기로 드래그하세요'}
-          <input
-            ref={inputRef}
-            type="file"
-            multiple
-            accept="image/*"
-            style={{ display: 'none' }}
-            onChange={(e) => handleFiles(Array.from(e.target.files))}
-          />
+      <div className="ant-row-between">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <h1>원고 업로드</h1>
+          <p className="ant-sub">합동지에 사용할 사진을 업로드하세요. 300 DPI 이상 권장.</p>
         </div>
+        <span className="ant-badge yellow">진행 중</span>
+      </div>
 
-        {error && <p className="ant-sub" style={{ color: '#c0392b' }}>{error}</p>}
+      <div
+        className="ant-dropzone"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => {
+          e.preventDefault();
+          handleFiles(Array.from(e.dataTransfer.files));
+        }}
+      >
+        <div className="ico">📤</div>
+        <div className="title">{uploading ? '업로드 중...' : '이미지를 끌어다 놓거나 클릭해 업로드'}</div>
+        <div className="hint">JPG, PNG, HEIC 지원 · 최대 200MB · SVG 불가</div>
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={(e) => handleFiles(Array.from(e.target.files))}
+        />
+      </div>
 
-        <h2>내가 업로드한 사진</h2>
+      {error && <p className="ant-error">{error}</p>}
+
+      <div className="ant-card">
+        <h2>업로드된 사진 ({submissions.length})</h2>
         {submissions.length === 0 ? (
-          <p className="ant-sub">아직 업로드한 사진이 없습니다.</p>
+          <p className="ant-sub" style={{ marginTop: 12 }}>아직 업로드한 사진이 없습니다.</p>
         ) : (
-          <ul className="ant-list">
+          <ul className="ant-list" style={{ marginTop: 8 }}>
             {submissions.map((s) => (
               <li key={s.id}>
-                <span>{s.fileName || s.originalName || s.id}</span>
-                <span className="ant-sub">{s.status || ''}</span>
+                <div className="ant-row" style={{ gap: 14 }}>
+                  <div
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 6,
+                      background: 'var(--ant-purple-thumb)',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div>
+                    <div className="name">{s.fileName || s.originalName || s.id}</div>
+                    {(s.width || s.height) && (
+                      <div className="meta">{s.width}×{s.height}</div>
+                    )}
+                  </div>
+                </div>
+                <span className="ant-badge lavender">{s.status || '통과'}</span>
               </li>
             ))}
           </ul>

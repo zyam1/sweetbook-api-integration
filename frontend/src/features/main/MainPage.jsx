@@ -1,4 +1,3 @@
-import HeaderSection from './sections/HeaderSection';
 import HeroSection from './sections/HeroSection';
 import SpecsSection from './sections/SpecsSection';
 import WorkspaceSection from './sections/WorkspaceSection';
@@ -16,7 +15,6 @@ function MainPage() {
   const { isLoggedIn } = useAuth();
   return (
     <div className="mp-page">
-      <HeaderSection />
       <HeroSection />
       <SpecsSection />
       {isLoggedIn && <WorkspaceSection />}
