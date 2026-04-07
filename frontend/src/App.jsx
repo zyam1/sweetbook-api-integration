@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import MainPage from './features/main/MainPage';
 import BookListPage from './features/book/BookListPage';
 import BookCreatePage from './features/book/BookCreatePage';
 import BookDetailPage from './features/book/BookDetailPage';
@@ -16,8 +17,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<MainPage />} />
         <Route element={<Layout />}>
-          <Route path="/" element={<Navigate to="/books" replace />} />
           <Route path="/books" element={<BookListPage />} />
           <Route path="/books/new" element={<BookCreatePage />} />
           <Route path="/books/:bookUid" element={<BookDetailPage />} />
