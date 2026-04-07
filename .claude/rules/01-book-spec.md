@@ -114,6 +114,27 @@ Live:
 
 ---
 
+## 캐싱 전략
+
+배경:
+
+- 메인 페이지에 판형 카드가 상시 노출되어 호출 빈도가 높음
+- 판형 데이터는 변경이 드묾
+
+권장:
+
+- backend 메모리 캐시 사용 (`services/bookService.js`)
+- TTL 1시간
+- 캐시 키: `book-specs:list`, `book-specs:{bookSpecUid}`
+- frontend는 `react-query`/`SWR`로 staleTime 동일하게 1시간 유지
+
+주의:
+
+- Live 환경에서 가격이 변경되면 캐시 무효화 필요
+- 캐시 미스 시에만 SweetBook API 호출
+
+---
+
 ## 추천 판형 가이드
 
 일기장 / 알림장

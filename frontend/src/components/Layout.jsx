@@ -28,6 +28,7 @@ export default function Layout() {
         <div className="nav-links">
           <NavLink to="/wizard">위저드</NavLink>
           <NavLink to="/books">책 목록</NavLink>
+          <NavLink to="/anthology">합동지</NavLink>
           <NavLink to="/orders">주문</NavLink>
           <NavLink to="/credits">충전금</NavLink>
         </div>

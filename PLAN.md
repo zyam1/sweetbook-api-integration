@@ -347,6 +347,34 @@ PORT=4000
 | `/anthology/:id/contributors` | 기여자 관리 | O | 기여자 추가/토큰·비번 발급 |
 | `/anthology/:id/submit/:token` | 기여자 제출 | **공개** | 토큰 + 비밀번호로 접근, 회원가입 불필요 |
 
+#### 9.2.1. MainPage 섹션 명세 (Figma "🏠 Main Page (Landing)" 기준)
+
+| 블록 | 구성 요소 | 데이터 소스 |
+|------|----------|------------|
+| **Header** | 로고(SweetPress) / Nav(`새 책 만들기`·`내 작업`·`주문 내역`·`가이드`·`합동지`) / **CreditBadge (상시 노출)** / 아바타 | `GET /api/credits`, 인증 컨텍스트 |
+| **Hero** | 타이틀 + 검색 입력(`책 이름이나 판형 입력`) + `새 책 만들기` CTA + **이어서 작업하기 카드** (마지막 편집 책 제목/판형/페이지/진행률 바) | `GET /api/projects/last-edited` (9.4.3 신규) |
+| **Section / Specs** | 판형 카드 그리드 (4종 기본 노출) + 필터 pill(`전체`·`하드커버`·`소프트커버`·`정사각`·`A판`) | `GET /api/book-specs` (캐싱 권장, `.claude/rules/01-book-spec.md` 캐싱 전략 절 참조) |
+| **Section / Workspace** | 좌 `내 작업` (편집 중/검수 대기/견적 확인 뱃지) + 우 `최근 주문` (`#SP-XXXX` + 배송중/제작중/완료 뱃지) | `GET /api/projects?userId=me`, `GET /api/orders?userId=me&limit=N` |
+| **Section / Anthology** | 좌 `내가 주최한 합동지` (제출률 `7/12`, D-day) + 우 `참여 중인 합동지` (@핸들, 평균 dpi) | `GET /api/anthology?role=owner`, `GET /api/anthology?role=contributor` |
+| **Footer** | `가이드`·`API`·`이용약관`·`문의` | 정적 |
+
+**비로그인 정책** — 메인 페이지(`/`)는 비로그인도 접근 가능. 섹션별 가시성 분기:
+
+| 섹션 | 비로그인 | 로그인 |
+|------|:-------:|:------:|
+| Header — Nav | ✅ | ✅ |
+| Header — CreditBadge | ❌ (숨김) | ✅ |
+| Header — 우측 영역 | `로그인` 버튼 | 아바타 |
+| Hero — 타이틀/검색/`새 책 만들기` CTA | ✅ | ✅ |
+| Hero — 이어서 작업하기 카드 | ❌ (숨김) | ✅ |
+| Section / Specs (판형) | ✅ | ✅ |
+| Section / Workspace (내 작업·최근 주문) | ❌ (전체 숨김) | ✅ |
+| Section / Anthology (내가 주최·참여) | **빈 상태 카드** (로그인 사용자가 합동지 0건일 때 보는 것과 동일 컴포넌트 재사용) | ✅ |
+| Footer | ✅ | ✅ |
+
+- 비로그인 상태에서 `새 책 만들기` CTA 클릭 → `/login`으로 리다이렉트
+- Anthology 빈 상태는 별도 디자인 만들지 않고 로그인 사용자의 빈 상태와 동일 컴포넌트 재사용
+
 ### 9.3. 차별화 기능 보강
 
 #### F1 — DPI 자동 검수 (페이지별 위험도)
@@ -356,7 +384,7 @@ PORT=4000
 ```js
 {
   bookId: 123,
-  summary: { ok: 40, warn: 5, danger: 2 },
+  summary: { ok: 40, warn: 5, danger: 2, avgDpi: 312, minDpi: 140 },
   pages: [
     { pageNo: 1, fileName: 'p001.jpg', actualDpi: 320, level: 'ok' },
     { pageNo: 2, fileName: 'p002.jpg', actualDpi: 220, level: 'warn' },
@@ -364,6 +392,8 @@ PORT=4000
   ]
 }
 ```
+
+> `avgDpi`/`minDpi`는 합동지 대시보드 "참여 중인 합동지" 카드("평균 312dpi" 표시)에서 사용된다.
 
 - `level`: `ok` (≥300) / `warn` (200~299) / `danger` (<200)
 - UI: BookEdit 페이지 그리드에 색상 뱃지 (녹/황/적), 위험 페이지 우선 표시 + 필터
@@ -397,8 +427,9 @@ PORT=4000
 ```prisma
 model Project {
   // ... 기존 필드
-  userId Int       // 신규 FK
-  user   User @relation(fields: [userId], references: [id])
+  userId       Int       // 신규 FK
+  user         User      @relation(fields: [userId], references: [id])
+  lastEditedAt DateTime  @updatedAt   // 신규: Hero "이어서 작업하기" 카드 정렬용
 }
 
 model Order {
@@ -407,6 +438,18 @@ model Order {
   user   User @relation(fields: [userId], references: [id])
 }
 ```
+
+> `lastEditedAt`은 `@updatedAt`으로 자동 갱신되지만, Phase B 구현 시 의도치 않은 갱신을 방지하기 위해 명시적 업데이트(편집 액션 시점만 갱신) 방식으로 재검토 가능.
+
+#### 9.4.3. 신규 backend 엔드포인트 (MainPage Hero 전용)
+
+| 메서드 | 경로 | 설명 | 응답 |
+|--------|------|------|------|
+| `GET` | `/api/projects/last-edited` | 인증된 사용자의 가장 최근 편집 프로젝트 1건 조회 | `{ id, title, bookSpecUid, pageCount, pageMax, currentStep, totalSteps, lastEditedAt }` |
+
+- 정렬: `lastEditedAt DESC`, `LIMIT 1`
+- 데이터 없으면 `204 No Content`
+- SweetBook API 미호출 (내부 DB만 조회)
 
 #### 9.4.2. 합동지 신규 모델
 
@@ -479,9 +522,10 @@ model ContributorSubmission {
 
 | Phase | 내용 | 의존성 |
 |:-----:|------|--------|
-| **A** | 인증 인프라 — Project/Order에 userId FK 추가, 기존 라우트 인증 미들웨어 적용, JWT 검증 미들웨어 | — |
-| **B** | 메인 페이지 실데이터 — MainPage 더미 제거, 빈 상태 UI (Figma 디자인 시스템 기반) | A |
-| **C** | 내 작업/주문 페이지 — MyProjects, MyOrders, OrderDetail | A, B |
+| **A** | 인증 인프라 — Project/Order에 userId FK 추가, `lastEditedAt` 추가, 기존 라우트 인증 미들웨어 적용, JWT 검증 미들웨어 | — |
+| **B-1** | 메인 페이지 레이아웃 — 9.2.1 6개 블록 구조 + 빈 상태 UI (Figma 디자인 시스템 기반), 비로그인 시 빈 카드 + 로그인 CTA | A |
+| **B-2** | 메인 페이지 섹션별 API 연동 — Hero(`/api/projects/last-edited`) + Specs(`book-specs` 캐싱) + Workspace(`projects`+`orders`) + Anthology(`anthology?role=`) | A, B-1 |
+| **C** | 내 작업/주문 페이지 — MyProjects, MyOrders, OrderDetail | A, B-2 |
 | **D** | Wizard 재설계 + F1/F4 검수 — `/wizard`, BookEdit, 페이지별 DPI 뱃지, 경고 모달 | A, C |
 | **E** | 합동지 본기능 — 9.4.2 스키마 + 9.5 인증 흐름 + 대시보드 + 기여자 제출 페이지 | A, D |
 
