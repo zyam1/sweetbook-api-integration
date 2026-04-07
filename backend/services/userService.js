@@ -13,7 +13,9 @@ const userService = {
       return user;
     } catch (err) {
       if (err && err.code === 'P2002') {
-        throw new Error('EMAIL_EXISTS');
+        const e = new Error('EMAIL_EXISTS');
+        e.code = 'EMAIL_EXISTS';
+        throw e;
       }
       throw err;
     }
