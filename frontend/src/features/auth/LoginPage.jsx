@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './LoginPage.css';
 import { loginApi } from './api';
 import { saveAuth } from './storage';
+import Modal from '../../components/ui/Modal';
 
 /**
  * SweetPress 로그인 페이지
@@ -12,6 +13,7 @@ function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [modal, setModal] = useState({ open: false, title: '', message: '', variant: 'info' });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +23,12 @@ function LoginPage() {
       navigate('/');
     } catch (err) {
       console.error(err);
-      alert(err?.response?.data?.message || '로그인 실패');
+      setModal({
+        open: true,
+        title: '로그인 실패',
+        message: err?.response?.data?.message || '로그인 실패',
+        variant: 'error',
+      });
     }
   };
 
@@ -80,6 +87,13 @@ function LoginPage() {
           </button>
         </div>
       </form>
+      <Modal
+        open={modal.open}
+        title={modal.title}
+        message={modal.message}
+        variant={modal.variant}
+        onClose={() => setModal((m) => ({ ...m, open: false }))}
+      />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import './SignUpPage.css';
 import { signupApi } from './api';
 import { saveAuth } from './storage';
+import Modal from '../../components/ui/Modal';
 
 /**
  * SweetPress 회원가입 페이지
@@ -15,15 +16,26 @@ function SignUpPage() {
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [agree, setAgree] = useState(false);
+  const [modal, setModal] = useState({ open: false, title: '', message: '', variant: 'info' });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!agree) {
-      alert('이용약관에 동의해주세요');
+      setModal({
+        open: true,
+        title: '약관 동의 필요',
+        message: '이용약관에 동의해주세요',
+        variant: 'error',
+      });
       return;
     }
     if (password !== passwordConfirm) {
-      alert('비밀번호가 일치하지 않습니다');
+      setModal({
+        open: true,
+        title: '비밀번호 불일치',
+        message: '비밀번호가 일치하지 않습니다',
+        variant: 'error',
+      });
       return;
     }
     try {
@@ -32,7 +44,12 @@ function SignUpPage() {
       navigate('/');
     } catch (err) {
       console.error(err);
-      alert(err?.response?.data?.message || '회원가입 실패');
+      setModal({
+        open: true,
+        title: '회원가입 실패',
+        message: err?.response?.data?.message || '회원가입 실패',
+        variant: 'error',
+      });
     }
   };
 
@@ -115,6 +132,13 @@ function SignUpPage() {
           </button>
         </div>
       </form>
+      <Modal
+        open={modal.open}
+        title={modal.title}
+        message={modal.message}
+        variant={modal.variant}
+        onClose={() => setModal((m) => ({ ...m, open: false }))}
+      />
     </div>
   );
 }
