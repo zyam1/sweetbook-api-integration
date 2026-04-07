@@ -21,5 +21,28 @@
     "deny": [],
     "defaultMode": "default"
   },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/userpromptsubmit-priority-rules-injector.py\""
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PROJECT_DIR}/.claude/hooks/sessionstart-compact-rules-injector.py\""
+          }
+        ]
+      }
+    ]
+  },
   "language": "KOREAN"
 }

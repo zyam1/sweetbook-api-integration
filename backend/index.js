@@ -3,6 +3,8 @@ const express = require('express');
 const cors = require('cors');
 
 const booksRouter = require('./routes/books');
+const bookSpecsRouter = require('./routes/bookSpecs');
+const templatesRouter = require('./routes/templates');
 const ordersRouter = require('./routes/orders');
 const creditsRouter = require('./routes/credits');
 const errorHandler = require('./middleware/errorHandler');
@@ -15,6 +17,8 @@ app.use(express.json());
 
 // Routes
 app.use('/api/books', booksRouter);
+app.use('/api/book-specs', bookSpecsRouter);
+app.use('/api/templates', templatesRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/credits', creditsRouter);
 

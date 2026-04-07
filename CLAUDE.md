@@ -205,6 +205,7 @@ sweetbook-api-integration/
 | **Gate 1/4 생략 불가** | 분석(1)과 검증(4)은 어떤 경우에도 생략 불가 | **작업 무효** |
 | **진입 선언** | 각 Gate 진입 시 "Gate N 진입" 선언 필수 | **작업 무효** |
 | **통과 선언** | Gate 완료 시 "Gate N 통과" 선언 후 다음 Gate 진입 | **진입 무효** |
+| **Skill 호출** | 각 Gate 진입 시 해당 Skill (`gate-01-gateway-skill` ~ `gate-04-verify-complete-skill`) 호출 필수. 텍스트 선언만으로는 무효 | **진입 무효** |
 
 ### 3.5. 새 요청 판단
 

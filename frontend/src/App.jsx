@@ -5,6 +5,11 @@ import BookCreatePage from './features/book/BookCreatePage';
 import BookDetailPage from './features/book/BookDetailPage';
 import OrderPage from './features/order/OrderPage';
 import CreditPage from './features/credit/CreditPage';
+import WizardLayout from './features/wizard/WizardLayout';
+import SpecStep from './features/wizard/SpecStep';
+import UploadStep from './features/wizard/UploadStep';
+import EditStep from './features/wizard/EditStep';
+import OrderStep from './features/wizard/OrderStep';
 import './App.css';
 
 function App() {
@@ -18,6 +23,13 @@ function App() {
           <Route path="/books/:bookUid" element={<BookDetailPage />} />
           <Route path="/orders" element={<OrderPage />} />
           <Route path="/credits" element={<CreditPage />} />
+          <Route path="/wizard" element={<WizardLayout />}>
+            <Route index element={<Navigate to="/wizard/spec" replace />} />
+            <Route path="spec" element={<SpecStep />} />
+            <Route path="upload" element={<UploadStep />} />
+            <Route path="edit" element={<EditStep />} />
+            <Route path="order" element={<OrderStep />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

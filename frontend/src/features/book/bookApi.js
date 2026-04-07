@@ -20,4 +20,28 @@ export const bookApi = {
   delete(bookUid) {
     return client.delete(`/books/${bookUid}`);
   },
+
+  uploadPhotos(bookUid, files) {
+    const fd = new FormData();
+    for (const f of files) fd.append('files', f);
+    return client.post(`/books/${bookUid}/photos`, fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
+  listPhotos(bookUid) {
+    return client.get(`/books/${bookUid}/photos`);
+  },
+
+  setCover(bookUid, data) {
+    return client.post(`/books/${bookUid}/cover`, data);
+  },
+
+  insertContent(bookUid, data) {
+    return client.post(`/books/${bookUid}/contents`, data);
+  },
+
+  clearContents(bookUid) {
+    return client.delete(`/books/${bookUid}/contents`);
+  },
 };

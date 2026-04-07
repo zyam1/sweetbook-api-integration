@@ -33,3 +33,9 @@ Thumbs.db
 
 # Misc
 *.local
+
+# Claude Code hook artifacts
+.claude/hooks/*-log.txt
+.claude/hooks/*-failed.txt
+.claude/hooks/*.lock
+.claude/hooks/.last_hook_trigger.json

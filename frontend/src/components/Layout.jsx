@@ -6,6 +6,7 @@ export default function Layout() {
       <nav className="nav">
         <div className="nav-brand">SweetBook</div>
         <div className="nav-links">
+          <NavLink to="/wizard">위저드</NavLink>
           <NavLink to="/books">책 목록</NavLink>
           <NavLink to="/orders">주문</NavLink>
           <NavLink to="/credits">충전금</NavLink>
