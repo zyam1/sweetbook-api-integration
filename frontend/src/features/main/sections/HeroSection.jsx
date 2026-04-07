@@ -1,7 +1,18 @@
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Container from '../../../components/ui/Container';
 import Button from '../../../components/ui/Button';
 import { useAuth } from '../../auth/useAuth';
+import { fetchLastEditedProject } from '../api';
+
+function formatLastEditedLabel(iso) {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const day = 24 * 60 * 60 * 1000;
+  if (diff < day) return '오늘';
+  if (diff < 2 * day) return '어제';
+  return `${Math.floor(diff / day)}일 전`;
+}
 
 /**
  * Hero — Figma node 39:2
@@ -11,6 +22,25 @@ import { useAuth } from '../../auth/useAuth';
 function HeroSection() {
   const navigate = useNavigate();
   const { isLoggedIn } = useAuth();
+  const [lastProject, setLastProject] = useState(null);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setLastProject(null);
+      return;
+    }
+    let cancelled = false;
+    fetchLastEditedProject()
+      .then((data) => {
+        if (!cancelled) setLastProject(data || null);
+      })
+      .catch((err) => {
+        console.warn('[HeroSection] fetchLastEditedProject 실패', err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn]);
 
   const handleCreate = () => {
     if (!isLoggedIn) {
@@ -41,23 +71,18 @@ function HeroSection() {
           </div>
         </div>
 
-        {isLoggedIn && (
+        {isLoggedIn && lastProject && (
           <aside className="mp-hero-active">
             <div className="mp-hero-active-label">
               <span className="mp-hero-active-label-dot" />
               <span>이어서 작업하기</span>
             </div>
-            <h3 className="mp-hero-active-title">봄날의 단편집 vol.2</h3>
-            <p className="mp-hero-active-meta">SQUAREBOOK_HC · 64 / 130p · 마지막 편집 어제</p>
-            <div className="mp-hero-active-progress">
-              <div className="mp-hero-active-progress-row">
-                <span className="lbl">편집 단계</span>
-                <span className="val">3 / 4</span>
-              </div>
-              <div className="mp-hero-active-bar">
-                <div className="mp-hero-active-bar-fill" />
-              </div>
-            </div>
+            <h3 className="mp-hero-active-title">{lastProject.title}</h3>
+            <p className="mp-hero-active-meta">
+              {lastProject.bookSpecUid}
+              {lastProject.pageCount != null ? ` · ${lastProject.pageCount}p` : ''}
+              {lastProject.lastEditedAt ? ` · 마지막 편집 ${formatLastEditedLabel(lastProject.lastEditedAt)}` : ''}
+            </p>
             <Link to="/wizard" style={{ textDecoration: 'none' }}>
               <Button variant="secondary" size="md" style={{ width: '100%' }}>
                 이어서 편집하기 →

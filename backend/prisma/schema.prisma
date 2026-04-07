@@ -18,22 +18,31 @@ model User {
   name         String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  projects         Project[]
+  orders           Order[]
+  ownedAnthologies Anthology[]   @relation("AnthologyOwner")
+  contributions    Contributor[]
 }
 
 // 내가 만든 책 메타 (SweetBook bookUid 매핑)
 model Project {
-  id          Int      @id @default(autoincrement())
-  bookUid     String   @unique
-  title       String
-  bookSpecUid String
-  status      String   @default("DRAFT") // DRAFT / FINALIZED / ORDERED
-  externalRef String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  bookUid      String   @unique
+  title        String
+  bookSpecUid  String
+  status       String   @default("DRAFT") // DRAFT / FINALIZED / ORDERED
+  externalRef  String?
+  userId       Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastEditedAt DateTime @updatedAt
 
+  user   User?   @relation(fields: [userId], references: [id])
   orders Order[]
 
   @@index([status])
+  @@index([userId])
 }
 
 // 주문 이력 (SweetBook orderUid 매핑)
@@ -41,6 +50,7 @@ model Order {
   id                Int      @id @default(autoincrement())
   sweetbookOrderUid String   @unique
   projectId         Int?
+  userId            Int?
   externalRef       String?
   status            String   // PAID / CONFIRMED / IN_PRODUCTION / SHIPPED / DELIVERED / CANCELLED
   quantity          Int
@@ -52,9 +62,51 @@ model Order {
   updatedAt         DateTime @updatedAt
 
   project Project? @relation(fields: [projectId], references: [id])
+  user    User?    @relation(fields: [userId], references: [id])
 
   @@index([status])
   @@index([externalRef])
+  @@index([userId])
+}
+
+// 다인 합본 (Anthology)
+model Anthology {
+  id          Int       @id @default(autoincrement())
+  ownerId     Int
+  owner       User      @relation("AnthologyOwner", fields: [ownerId], references: [id])
+  title       String
+  bookSpecUid String
+  deadline    DateTime?
+  status      String    @default("RECRUITING")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  contributors Contributor[]
+
+  @@index([ownerId])
+}
+
+model Contributor {
+  id             Int       @id @default(autoincrement())
+  anthologyId    Int
+  userId         Int
+  handle         String?
+  allocatedPages Int       @default(0)
+  status         String    @default("PENDING")
+  anthology      Anthology @relation(fields: [anthologyId], references: [id])
+  user           User      @relation(fields: [userId], references: [id])
+  submissions    ContributorSubmission[]
+
+  @@unique([anthologyId, userId])
+  @@index([userId])
+}
+
+model ContributorSubmission {
+  id            Int         @id @default(autoincrement())
+  contributorId Int
+  fileName      String
+  dpi           Int?
+  createdAt     DateTime    @default(now())
+  contributor   Contributor @relation(fields: [contributorId], references: [id])
 }
 
 // 웹훅 이벤트 로그 (멱등 처리용)

@@ -1,11 +1,18 @@
 const { Router } = require('express');
 const orderService = require('../services/orderService');
+const { authOptional } = require('../middleware/auth');
 
 const router = Router();
 
-router.get('/', async (req, res, next) => {
+router.get('/', authOptional, async (req, res, next) => {
   try {
-    const data = await orderService.list(req.query);
+    const data = req.user
+      ? await orderService.list({
+          ...req.query,
+          userId: req.user.id,
+          limit: Number(req.query.limit) || undefined,
+        })
+      : await orderService.list(req.query);
     res.json({ success: true, data });
   } catch (err) {
     next(err);

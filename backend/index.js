@@ -8,6 +8,8 @@ const templatesRouter = require('./routes/templates');
 const ordersRouter = require('./routes/orders');
 const creditsRouter = require('./routes/credits');
 const authRouter = require('./routes/auth');
+const projectsRouter = require('./routes/projects');
+const anthologyRouter = require('./routes/anthology');
 const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
@@ -23,6 +25,8 @@ app.use('/api/templates', templatesRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/credits', creditsRouter);
 app.use('/api/auth', authRouter);
+app.use('/api/projects', projectsRouter);
+app.use('/api/anthology', anthologyRouter);
 
 // Health check
 app.get('/api/health', async (req, res, next) => {
