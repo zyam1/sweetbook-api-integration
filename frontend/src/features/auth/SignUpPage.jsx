@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './SignUpPage.css';
+import { signupApi } from './api';
+import { saveAuth } from './storage';
 
 /**
  * SweetPress 회원가입 페이지
@@ -14,10 +16,24 @@ function SignUpPage() {
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [agree, setAgree] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('signup submit', { name, email, password, passwordConfirm, agree });
-    navigate('/');
+    if (!agree) {
+      alert('이용약관에 동의해주세요');
+      return;
+    }
+    if (password !== passwordConfirm) {
+      alert('비밀번호가 일치하지 않습니다');
+      return;
+    }
+    try {
+      const result = await signupApi({ name, email, password });
+      saveAuth(result);
+      navigate('/');
+    } catch (err) {
+      console.error(err);
+      alert(err?.response?.data?.message || '회원가입 실패');
+    }
   };
 
   return (

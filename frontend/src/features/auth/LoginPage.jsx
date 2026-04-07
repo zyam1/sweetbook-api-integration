@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LoginPage.css';
+import { loginApi } from './api';
+import { saveAuth } from './storage';
 
 /**
  * SweetPress 로그인 페이지
@@ -11,10 +13,16 @@ function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('login submit', { email, password });
-    navigate('/');
+    try {
+      const result = await loginApi({ email, password });
+      saveAuth(result);
+      navigate('/');
+    } catch (err) {
+      console.error(err);
+      alert(err?.response?.data?.message || '로그인 실패');
+    }
   };
 
   return (

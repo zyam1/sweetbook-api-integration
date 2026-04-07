@@ -44,6 +44,45 @@
   color: #fff;
 }
 
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+  padding-left: 16px;
+}
+
+.nav-user-name {
+  font-size: 14px;
+  color: #333;
+}
+
+.nav-user a {
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  color: #555;
+}
+
+.nav-user a:hover {
+  background: #f3f4f6;
+}
+
+.nav-user-logout {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+}
+
+.nav-user-logout:hover {
+  background: #f3f4f6;
+}
+
 .main {
   flex: 1;
   padding: 32px 24px;
