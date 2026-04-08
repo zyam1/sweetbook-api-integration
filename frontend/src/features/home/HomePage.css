@@ -4,7 +4,7 @@
   /* ant-page 좌우(64px)·상단(48px) 패딩을 상쇄하여 가로 전체 띠로 표현 */
   position: relative;
   margin: -48px -64px 0;
-  padding: 72px 64px;
+  padding: 96px 64px 72px;
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
@@ -19,8 +19,8 @@
   inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0.45) 0%,
-    rgba(0, 0, 0, 0.3) 100%
+    rgba(0, 0, 0, 0.5) 0%,
+    rgba(0, 0, 0, 0.35) 100%
   );
   pointer-events: none;
 }
@@ -29,30 +29,101 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  max-width: 1080px;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  max-width: 1120px;
   margin: 0 auto;
   color: #fff;
 }
 
-.home-hero-inner .home-hero-title,
+.home-hero-inner .home-hero-title {
+  color: #fff;
+  font-size: 42px;
+}
+
 .home-hero-inner .home-hero-sub {
+  color: rgba(255, 255, 255, 0.9);
+  max-width: 640px;
+}
+
+.home-hero-actions {
+  justify-content: center;
+}
+
+/* 3단계 가이드 — 라인 형태 */
+.home-hero-steps {
+  list-style: none;
+  margin: 40px 0 0;
+  padding: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  position: relative;
+}
+
+/* 단계 연결선 (숫자 원 중심을 잇는 가로선) */
+.home-hero-steps::before {
+  content: "";
+  position: absolute;
+  top: 22px;
+  left: calc(100% / 6);
+  right: calc(100% / 6);
+  height: 2px;
+  background: rgba(255, 255, 255, 0.45);
+  z-index: 0;
+}
+
+.home-step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0 16px;
   color: #fff;
 }
 
-.home-hero-guide {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 24px;
+.home-step-num {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--ant-purple);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.home-step-body {
+  margin-top: 14px;
+  max-width: 260px;
+}
+
+.home-step-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.home-step-desc {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.6;
+  margin: 6px 0 0;
 }
 
 @media (max-width: 900px) {
-  .home-hero-guide { grid-template-columns: 1fr; }
-}
-
-.home-hero-guide .home-guide-card {
-  background: rgba(255, 255, 255, 0.92);
+  .home-hero-steps {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .home-hero-steps::before { display: none; }
 }
 
 .home-hero-title {

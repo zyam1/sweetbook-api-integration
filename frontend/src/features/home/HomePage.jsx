@@ -11,6 +11,8 @@ import "./HomePage.css";
 import Badge from "../../components/Badge";
 import heroImage from "../../assets/images/creative-workspace.png";
 
+const coverBaseUrl = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:4000"}/uploads/anthology`;
+
 // Figma: SweetPress (fileKey: 7WJrsI7QOEOrXFP1x4LtAH) — 디자인 토큰/ant-* 공통 클래스 재사용
 export default function HomePage() {
   const [owned, setOwned] = useState([]);
@@ -40,13 +42,22 @@ export default function HomePage() {
 
   const renderCards = (items) => (
     <div className="ant-grid">
-      {items.slice(0, 3).map((a) => {
+      {items.slice(0, 4).map((a) => {
         return (
           <Link
             key={a.id}
             to={`/anthology/${a.id}`}
             className="ant-anthology-card"
           >
+            {a.coverFrontPhoto ? (
+              <img
+                className="ant-anthology-card-thumb"
+                src={`${coverBaseUrl}/${a.id}/cover/${a.coverFrontPhoto}`}
+                alt="표지 앞면"
+              />
+            ) : (
+              <div className="ant-anthology-card-thumb-empty">표지 미설정</div>
+            )}
             <div className="ant-row-between">
               <div className="ant-anthology-card-title">
                 {a.title || "제목 없음"}
@@ -62,6 +73,9 @@ export default function HomePage() {
                   ? orderStatusLabel(a.latestOrder.status)
                   : anthologyStatusLabel(a.status || "DRAFT")}
               </Badge>
+            </div>
+            <div className="ant-anthology-card-meta">
+              {a.contributorCount ?? 0}명 · {a.pageCount ?? 0}p
             </div>
           </Link>
         );
@@ -102,30 +116,36 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* 빠른 시작 3단계 가이드 (hero 내부) */}
-          <div className="home-hero-guide">
-            <div className="home-guide-card">
-              <span className="home-guide-num">1</span>
-              <div className="home-guide-title">판형 · 참여자 설정</div>
-              <p className="home-guide-desc">
-                원하는 판형을 고르고 함께할 참여자를 초대하세요.
-              </p>
-            </div>
-            <div className="home-guide-card">
-              <span className="home-guide-num">2</span>
-              <div className="home-guide-title">원고 모으기</div>
-              <p className="home-guide-desc">
-                참여자들이 각자 글과 사진을 업로드하면 자동으로 정리돼요.
-              </p>
-            </div>
-            <div className="home-guide-card">
-              <span className="home-guide-num">3</span>
-              <div className="home-guide-title">최종화 · 주문</div>
-              <p className="home-guide-desc">
-                페이지를 확정하고 주문하면 인쇄·배송까지 진행됩니다.
-              </p>
-            </div>
-          </div>
+          {/* 빠른 시작 3단계 가이드 (라인 형태) */}
+          <ol className="home-hero-steps">
+            <li className="home-step">
+              <span className="home-step-num">1</span>
+              <div className="home-step-body">
+                <div className="home-step-title">판형 · 참여자 설정</div>
+                <p className="home-step-desc">
+                  원하는 판형을 고르고 함께할 참여자를 초대하세요.
+                </p>
+              </div>
+            </li>
+            <li className="home-step">
+              <span className="home-step-num">2</span>
+              <div className="home-step-body">
+                <div className="home-step-title">원고 모으기</div>
+                <p className="home-step-desc">
+                  참여자들이 각자 글과 사진을 업로드하면 자동으로 정리돼요.
+                </p>
+              </div>
+            </li>
+            <li className="home-step">
+              <span className="home-step-num">3</span>
+              <div className="home-step-body">
+                <div className="home-step-title">최종화 · 주문</div>
+                <p className="home-step-desc">
+                  페이지를 확정하고 주문하면 인쇄·배송까지 진행됩니다.
+                </p>
+              </div>
+            </li>
+          </ol>
         </div>
       </section>
 

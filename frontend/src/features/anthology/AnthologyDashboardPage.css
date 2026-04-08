@@ -81,8 +81,15 @@
 .participant-row-main {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
+}
+.participant-row-main > .arrow-wrap {
+  margin-left: auto;
+}
+.participant-row-main .name,
+.participant-row-main .meta {
+  text-align: left;
 }
 .participant-row.expanded {
   background: #f7f5ff;
