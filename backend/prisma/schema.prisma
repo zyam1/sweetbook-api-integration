@@ -124,8 +124,11 @@ model ContributorSubmission {
   sizeBytes     Int?
   dpi           Int?
   bindingKey    String?
+  order         Int         @default(0)
   createdAt     DateTime    @default(now())
   contributor   Contributor @relation(fields: [contributorId], references: [id])
+
+  @@index([contributorId])
 }
 
 // 웹훅 이벤트 로그 (멱등 처리용)

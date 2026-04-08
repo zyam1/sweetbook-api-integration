@@ -20,7 +20,7 @@ const anthologyService = {
   async listOwned(userId) {
     if (!userId) return [];
 
-    return db.anthology.findMany({
+    const rows = await db.anthology.findMany({
       where: { ownerId: userId },
       select: {
         id: true,
@@ -36,6 +36,17 @@ const anthologyService = {
         { createdAt: 'desc' },
       ],
     });
+
+    const refs = rows.map((a) => `anthology:${a.id}`);
+    const orders = refs.length
+      ? await db.order.findMany({ where: { externalRef: { in: refs } } })
+      : [];
+    const orderMap = new Map(orders.map((o) => [o.externalRef, o]));
+
+    return rows.map((a) => ({
+      ...a,
+      latestOrder: orderMap.get(`anthology:${a.id}`) ?? null,
+    }));
   },
 
   // 내가 참여(contributor)한 합본 목록
@@ -63,7 +74,7 @@ const anthologyService = {
       orderBy: [{ anthology: { deadline: 'asc' } }],
     });
 
-    return rows.map((c) => ({
+    const mapped = rows.map((c) => ({
       ...c.anthology,
       contributor: {
         id: c.id,
@@ -71,6 +82,17 @@ const anthologyService = {
         allocatedPages: c.allocatedPages,
         status: c.status,
       },
+    }));
+
+    const refs = mapped.map((a) => `anthology:${a.id}`);
+    const orders = refs.length
+      ? await db.order.findMany({ where: { externalRef: { in: refs } } })
+      : [];
+    const orderMap = new Map(orders.map((o) => [o.externalRef, o]));
+
+    return mapped.map((a) => ({
+      ...a,
+      latestOrder: orderMap.get(`anthology:${a.id}`) ?? null,
     }));
   },
 
@@ -115,6 +137,7 @@ const anthologyService = {
       (sum, c) => sum + (c._count?.submissions || 0),
       0
     );
+    result.latestOrder = await orderService.syncByExternalRef(`anthology:${id}`);
     return result;
   },
 

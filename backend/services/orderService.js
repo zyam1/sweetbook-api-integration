@@ -46,6 +46,38 @@ const orderService = {
   cancel(orderUid, cancelReason) {
     return client.orders.cancel(orderUid, cancelReason);
   },
+
+  // externalRef로 로컬 주문 조회 후, SweetBook에서 최신 상태를 가져와 동기화
+  async syncByExternalRef(externalRef) {
+    const local = await db.order.findFirst({ where: { externalRef } });
+    if (!local) return null;
+    if (!local.sweetbookOrderUid) return local;
+
+    let remote;
+    try {
+      remote = await client.orders.get(local.sweetbookOrderUid);
+    } catch (e) {
+      return local;
+    }
+
+    const remoteStatus = remote?.status ?? null;
+    const remoteTracking = remote?.trackingNumber ?? null;
+
+    const statusChanged = remoteStatus && remoteStatus !== local.status;
+    const trackingChanged =
+      remoteTracking != null && remoteTracking !== local.trackingNumber;
+
+    if (!statusChanged && !trackingChanged) return local;
+
+    const data = {};
+    if (statusChanged) data.status = remoteStatus;
+    if (trackingChanged) data.trackingNumber = remoteTracking;
+
+    return db.order.update({
+      where: { id: local.id },
+      data,
+    });
+  },
 };
 
 module.exports = orderService;

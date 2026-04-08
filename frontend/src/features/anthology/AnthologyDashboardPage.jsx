@@ -4,6 +4,7 @@ import { deleteAnthology, getAnthology, listContributors, reorderContributors } 
 import FinalizeModal from './FinalizeModal';
 import CoverSettingsModal from './CoverSettingsModal';
 import Modal from '../../components/ui/Modal';
+import { orderStatusLabel } from './orderStatus';
 import './anthology.css';
 import './AnthologyDashboardPage.css';
 
@@ -82,6 +83,68 @@ export default function AnthologyDashboardPage() {
   const statusLabel = (s) =>
     s === 'SUBMITTED' ? '제출완료' : s === 'DRAFT' ? '작성중' : '대기';
 
+  const latestOrder = anthology.latestOrder;
+  if (latestOrder) {
+    const orderLabel = orderStatusLabel(latestOrder.status);
+    const createdAtText = latestOrder.createdAt
+      ? new Date(latestOrder.createdAt).toLocaleString('ko-KR')
+      : '-';
+    return (
+      <div className="ant-page">
+        <div className="ant-crumb">
+          <span>합동지</span>
+          <span className="ant-crumb-sep">›</span>
+          <span>{anthology.title}</span>
+        </div>
+
+        <div className="ant-row-between">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="ant-row">
+              <h1>{anthology.title}</h1>
+              <span className="ant-badge lavender">{orderLabel}</span>
+            </div>
+            <p className="ant-sub">
+              {anthology.bookSpecUid || ''} · 페이지 {anthology.pageCount ?? 0}p · 참여자 {contributors.length}명
+            </p>
+          </div>
+        </div>
+
+        <div className="ant-card">
+          <div className="ant-row-between">
+            <h2>배송 정보</h2>
+            <span className="ant-badge lavender">{orderLabel}</span>
+          </div>
+          <ul className="ant-list" style={{ marginTop: 12 }}>
+            <li className="ant-row-between">
+              <span className="ant-sub">주문번호</span>
+              <span>{latestOrder.sweetbookOrderUid || '-'}</span>
+            </li>
+            <li className="ant-row-between">
+              <span className="ant-sub">수령인</span>
+              <span>{latestOrder.recipientName ?? '-'}</span>
+            </li>
+            <li className="ant-row-between">
+              <span className="ant-sub">수량</span>
+              <span>{latestOrder.quantity}</span>
+            </li>
+            <li className="ant-row-between">
+              <span className="ant-sub">결제금액</span>
+              <span>{Number(latestOrder.paidCreditAmount ?? 0).toLocaleString()} 크레딧</span>
+            </li>
+            <li className="ant-row-between">
+              <span className="ant-sub">송장번호</span>
+              <span>{latestOrder.trackingNumber || '준비중'}</span>
+            </li>
+            <li className="ant-row-between">
+              <span className="ant-sub">주문일</span>
+              <span>{createdAtText}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="ant-page">
       <div className="ant-crumb">
@@ -130,13 +193,27 @@ export default function AnthologyDashboardPage() {
         </div>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1fr)',
-          gap: 24,
-        }}
-      >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div className="ant-card">
+          <div className="ant-row-between">
+            <h2>표지 설정</h2>
+            <span className={`ant-badge ${anthology.coverFrontPhoto ? 'lavender' : 'pink'}`}>
+              {anthology.coverFrontPhoto ? '설정됨' : '미설정'}
+            </span>
+          </div>
+          <p className="ant-sub" style={{ marginTop: 10 }}>
+            템플릿과 표지 이미지를 선택하세요. 마감 시 books → photos → cover 순으로 호출됩니다.
+          </p>
+          <div style={{ marginTop: 12 }}>
+            <button
+              className="ant-btn ant-btn-primary"
+              onClick={() => setShowCoverModal(true)}
+            >
+              표지 설정
+            </button>
+          </div>
+        </div>
+
         <div className="ant-card">
           <h2>참여자 목록</h2>
           {contributors.length === 0 ? (
@@ -183,53 +260,6 @@ export default function AnthologyDashboardPage() {
           )}
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div className="ant-card">
-            <div className="ant-row-between">
-              <h2>표지 설정</h2>
-              <span className={`ant-badge ${anthology.coverFrontPhoto ? 'lavender' : 'pink'}`}>
-                {anthology.coverFrontPhoto ? '설정됨' : '미설정'}
-              </span>
-            </div>
-            <p className="ant-sub" style={{ marginTop: 10 }}>
-              템플릿과 표지 이미지를 선택하세요. 마감 시 books → photos → cover 순으로 호출됩니다.
-            </p>
-            <div style={{ marginTop: 12 }}>
-              <button
-                className="ant-btn ant-btn-primary"
-                onClick={() => setShowCoverModal(true)}
-              >
-                표지 설정
-              </button>
-            </div>
-          </div>
-
-          <div className="ant-card">
-            <h2>책 진행 상황</h2>
-            <ul className="ant-list" style={{ marginTop: 8 }}>
-              <li>
-                <span className="ant-sub" style={{ color: 'var(--ant-ink)' }}>1. 책 생성 (POST /books)</span>
-                <span className="ant-badge lavender">완료</span>
-              </li>
-              <li>
-                <span className="ant-sub" style={{ color: 'var(--ant-ink)' }}>2. 사진 업로드</span>
-                <span className="ant-badge yellow">진행 중</span>
-              </li>
-              <li>
-                <span className="ant-sub" style={{ color: 'var(--ant-ink)' }}>3. 표지 설정</span>
-                <span className="ant-badge subtle">대기</span>
-              </li>
-              <li>
-                <span className="ant-sub" style={{ color: 'var(--ant-ink)' }}>4. 내지 추가</span>
-                <span className="ant-badge subtle">대기</span>
-              </li>
-              <li>
-                <span className="ant-sub" style={{ color: 'var(--ant-ink)' }}>5. 최종화</span>
-                <span className="ant-badge subtle">대기</span>
-              </li>
-            </ul>
-          </div>
-        </div>
       </div>
 
       <Modal
