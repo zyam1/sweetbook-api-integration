@@ -1,1 +1,25 @@
 /* Page-specific styles handled via anthology.css common tokens. */
+
+.ant-anthology-card-thumb {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1.414;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background: #f2f2f2;
+}
+
+.ant-anthology-card-thumb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1 / 1.414;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  background: #f2f2f2;
+  color: #999;
+  font-size: 13px;
+}
+

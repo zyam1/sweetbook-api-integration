@@ -37,10 +37,11 @@ const anthologyService = {
         id: true,
         title: true,
         bookSpecUid: true,
+        coverFrontPhoto: true,
         deadline: true,
         status: true,
         createdAt: true,
-        _count: { select: { contributors: true } },
+        contributors: { select: { _count: { select: { submissions: true } } } },
       },
       orderBy: [
         { deadline: 'asc' },
@@ -54,10 +55,15 @@ const anthologyService = {
       : [];
     const orderMap = new Map(orders.map((o) => [o.externalRef, o]));
 
-    return rows.map((a) => ({
-      ...a,
-      latestOrder: orderMap.get(`anthology:${a.id}`) ?? null,
-    }));
+    return rows.map((a) => {
+      const { contributors, ...rest } = a;
+      return {
+        ...rest,
+        contributorCount: contributors.length,
+        pageCount: contributors.reduce((s, c) => s + (c._count?.submissions || 0), 0),
+        latestOrder: orderMap.get(`anthology:${a.id}`) ?? null,
+      };
+    });
   },
 
   // 내가 참여(contributor)한 합본 목록
@@ -76,24 +82,31 @@ const anthologyService = {
             id: true,
             title: true,
             bookSpecUid: true,
+            coverFrontPhoto: true,
             deadline: true,
             status: true,
             ownerId: true,
+            contributors: { select: { allocatedPages: true } },
           },
         },
       },
       orderBy: [{ anthology: { deadline: 'asc' } }],
     });
 
-    const mapped = rows.map((c) => ({
-      ...c.anthology,
-      contributor: {
-        id: c.id,
-        handle: c.handle,
-        allocatedPages: c.allocatedPages,
-        status: c.status,
-      },
-    }));
+    const mapped = rows.map((c) => {
+      const { contributors, ...anthologyRest } = c.anthology;
+      return {
+        ...anthologyRest,
+        contributorCount: contributors.length,
+        pageCount: contributors.reduce((s, x) => s + (x.allocatedPages || 0), 0),
+        contributor: {
+          id: c.id,
+          handle: c.handle,
+          allocatedPages: c.allocatedPages,
+          status: c.status,
+        },
+      };
+    });
 
     const refs = mapped.map((a) => `anthology:${a.id}`);
     const orders = refs.length

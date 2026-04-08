@@ -20,3 +20,26 @@ export function orderStatusLabel(status) {
       return status || '';
   }
 }
+
+// 주문 상태 → 뱃지 색상 클래스 매핑
+export function orderBadgeClass(status) {
+  switch (status) {
+    case 'PAID':
+    case 'PDF_READY':
+      return 'yellow';
+    case 'CONFIRMED':
+    case 'IN_PRODUCTION':
+    case 'COMPLETED':
+    case 'PRODUCTION_COMPLETE':
+      return 'lavender';
+    case 'SHIPPED':
+      return 'pink';
+    case 'DELIVERED':
+      return 'lavender';
+    case 'CANCELLED':
+    case 'CANCELLED_REFUND':
+      return 'subtle';
+    default:
+      return 'subtle';
+  }
+}

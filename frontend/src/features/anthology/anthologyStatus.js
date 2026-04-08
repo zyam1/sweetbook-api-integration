@@ -11,3 +11,17 @@ export function anthologyStatusLabel(status) {
       return status || '';
   }
 }
+
+// 합동지 상태 → 뱃지 색상 클래스 매핑
+export function anthologyBadgeClass(status) {
+  switch (status) {
+    case 'RECRUITING':
+      return 'pink';
+    case 'DRAFT':
+      return 'subtle';
+    case 'FINALIZED':
+      return 'lavender';
+    default:
+      return 'subtle';
+  }
+}

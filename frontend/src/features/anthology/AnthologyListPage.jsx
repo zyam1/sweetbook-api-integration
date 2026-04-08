@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listAnthologies } from './api';
-import { orderStatusLabel } from './orderStatus';
-import { anthologyStatusLabel } from './anthologyStatus';
+import { orderStatusLabel, orderBadgeClass } from './orderStatus';
+import { anthologyStatusLabel, anthologyBadgeClass } from './anthologyStatus';
 import './anthology.css';
 import './AnthologyListPage.css';
+
+const coverBaseUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'}/uploads/anthology`;
 
 // Figma: SweetPress / Anthology / List (node 105:60)
 export default function AnthologyListPage() {
@@ -58,19 +60,24 @@ export default function AnthologyListPage() {
 
       <div className="ant-grid">
         {items.map((a) => {
-          const total = a.contributorMax || a.contributorCount || 0;
-          const filled = a.contributorCount ?? 0;
-          const pct = total ? Math.min(100, Math.round((filled / total) * 100)) : 0;
           return (
             <Link key={a.id} to={`/anthology/${a.id}`} className="ant-anthology-card">
+              {a.coverFrontPhoto ? (
+                <img
+                  className="ant-anthology-card-thumb"
+                  src={`${coverBaseUrl}/${a.id}/cover/${a.coverFrontPhoto}`}
+                  alt="표지 앞면"
+                />
+              ) : (
+                <div className="ant-anthology-card-thumb-empty">표지 미설정</div>
+              )}
               <div className="ant-row-between">
                 <div className="ant-anthology-card-title">{a.title || '제목 없음'}</div>
-                <span className="ant-badge lavender">{a.latestOrder?.status ? orderStatusLabel(a.latestOrder.status) : anthologyStatusLabel(a.status || 'DRAFT')}</span>
+                <span className={`ant-badge ${a.latestOrder?.status ? orderBadgeClass(a.latestOrder.status) : anthologyBadgeClass(a.status || 'DRAFT')}`}>{a.latestOrder?.status ? orderStatusLabel(a.latestOrder.status) : anthologyStatusLabel(a.status || 'DRAFT')}</span>
               </div>
               <div className="ant-anthology-card-meta">
-                {a.bookSpecUid || ''} · {filled}/{total || '?'}명 · {a.pageCount ?? 0}p
+                {a.contributorCount ?? 0}명 · {a.pageCount ?? 0}p
               </div>
-              <div className="ant-progress"><span style={{ width: `${pct}%` }} /></div>
             </Link>
           );
         })}
