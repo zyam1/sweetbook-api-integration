@@ -1,0 +1,131 @@
+/* HomePage 전용 레이아웃 — 기존 ant-* 토큰/클래스 재사용 기반 */
+
+.home-hero {
+  background: var(--ant-surface);
+  border: 1px solid var(--ant-border);
+  border-radius: var(--ant-radius-card);
+  padding: 56px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background-image: linear-gradient(135deg, var(--ant-purple-soft) 0%, var(--ant-surface) 60%);
+}
+
+.home-hero-title {
+  font-size: 36px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ant-ink);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.home-hero-sub {
+  font-size: 15px;
+  color: var(--ant-sub);
+  margin: 0;
+  max-width: 560px;
+  line-height: 1.6;
+}
+
+.home-hero-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.home-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.home-section-head h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ant-ink);
+}
+
+.home-section-head a {
+  font-size: 13px;
+  color: var(--ant-purple);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.home-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .home-grid-3 { grid-template-columns: 1fr; }
+}
+
+.home-guide-card {
+  background: var(--ant-surface);
+  border: 1px solid var(--ant-border);
+  border-radius: var(--ant-radius-card);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.home-guide-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 16px;
+  background: var(--ant-purple);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.home-guide-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ant-ink);
+}
+
+.home-guide-desc {
+  font-size: 13px;
+  color: var(--ant-sub);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.home-shortcut-card {
+  background: var(--ant-surface);
+  border: 1px solid var(--ant-border);
+  border-radius: var(--ant-radius-card);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--ant-ink);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.home-shortcut-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(115, 92, 199, 0.08);
+}
+
+.home-shortcut-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.home-shortcut-desc {
+  font-size: 13px;
+  color: var(--ant-sub);
+}

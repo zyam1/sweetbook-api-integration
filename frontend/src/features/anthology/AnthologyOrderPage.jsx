@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { orderAnthology } from './api';
+import Modal from '../../components/ui/Modal';
 import './anthology.css';
 import './AnthologyOrderPage.css';
 
@@ -24,6 +25,7 @@ export default function AnthologyOrderPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [successOpen, setSuccessOpen] = useState(false);
 
   const update = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
@@ -42,8 +44,7 @@ export default function AnthologyOrderPage() {
           address2: form.address2,
         },
       });
-      alert('주문이 생성되었습니다.');
-      navigate(`/anthology/${id}`);
+      setSuccessOpen(true);
     } catch (err) {
       setError(err?.response?.data?.error || err.message);
     } finally {
@@ -189,6 +190,18 @@ export default function AnthologyOrderPage() {
           </div>
         </form>
       </div>
+
+      <Modal
+        open={successOpen}
+        variant="success"
+        title="주문이 생성되었습니다"
+        message="주문이 정상적으로 접수되었습니다."
+        confirmText="확인"
+        onClose={() => {
+          setSuccessOpen(false);
+          navigate(`/anthology/${id}`);
+        }}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
+import HomePage from './features/home/HomePage';
 import LoginPage from './features/auth/LoginPage';
 import SignUpPage from './features/auth/SignUpPage';
 import AnthologyListPage from './features/anthology/AnthologyListPage';
@@ -18,7 +19,7 @@ function App() {
         <Route path="/c/:token" element={<ContributorAuthPage />} />
         <Route path="/c/:token/upload" element={<ContributorUploadPage />} />
         <Route element={<Layout />}>
-          <Route path="/" element={<Navigate to="/anthology" replace />} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignUpPage />} />
           <Route path="/anthology" element={<AnthologyListPage />} />
