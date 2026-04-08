@@ -6,7 +6,7 @@ import "./anthology.css";
 import "./AnthologyNewPage.css";
 
 // Figma: SweetPress / Anthology / New (Wizard) (node 111:60)
-const STEPS = ["기본 정보", "판형 선택", "내지 템플릿", "참여자 모집"];
+const STEPS = ["기본 정보", "판형 선택", "표지 템플릿", "내지 템플릿", "참여자 모집"];
 
 export default function AnthologyNewPage() {
   const navigate = useNavigate();
@@ -19,12 +19,14 @@ export default function AnthologyNewPage() {
     description: "",
     password: "",
     bookSpecUid: "",
+    coverTemplateUid: "",
     contentTemplateUid: "",
   });
   const [contributors, setContributors] = useState([{ name: "", email: "" }]);
 
   const [specs, setSpecs] = useState([]);
-  const [templates, setTemplates] = useState([]);
+  const [contentTemplates, setContentTemplates] = useState([]);
+  const [coverTemplates, setCoverTemplates] = useState([]);
 
   useEffect(() => {
     client
@@ -46,7 +48,24 @@ export default function AnthologyNewPage() {
       })
       .then((res) => {
         const inner = res.data?.data?.data ?? res.data?.data;
-        setTemplates(
+        setContentTemplates(
+          Array.isArray(inner)
+            ? inner
+            : inner?.templates || inner?.data || inner?.items || [],
+        );
+      })
+      .catch(() => {});
+  }, [form.bookSpecUid]);
+
+  useEffect(() => {
+    if (!form.bookSpecUid) return;
+    client
+      .get("/templates", {
+        params: { bookSpecUid: form.bookSpecUid, templateKind: "cover" },
+      })
+      .then((res) => {
+        const inner = res.data?.data?.data ?? res.data?.data;
+        setCoverTemplates(
           Array.isArray(inner)
             ? inner
             : inner?.templates || inner?.data || inner?.items || [],
@@ -60,7 +79,8 @@ export default function AnthologyNewPage() {
   const canNext = () => {
     if (step === 0) return form.title.trim().length > 0 && form.password.trim().length > 0;
     if (step === 1) return !!form.bookSpecUid;
-    if (step === 2) return !!form.contentTemplateUid;
+    if (step === 2) return !!form.coverTemplateUid;
+    if (step === 3) return !!form.contentTemplateUid;
     return true;
   };
 
@@ -73,6 +93,7 @@ export default function AnthologyNewPage() {
         description: form.description,
         password: form.password,
         bookSpecUid: form.bookSpecUid,
+        coverTemplateUid: form.coverTemplateUid,
         contentTemplateUid: form.contentTemplateUid,
       });
       const anthologyId = created?.id || created?.anthologyId;
@@ -182,9 +203,27 @@ export default function AnthologyNewPage() {
 
         {step === 2 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <p className="ant-sub">표지 템플릿을 선택하세요.</p>
+            <div className="ant-grid">
+              {coverTemplates.map((t) => (
+                <div
+                  key={t.templateUid}
+                  className={`ant-spec-card ${form.coverTemplateUid === t.templateUid ? "selected" : ""}`}
+                  onClick={() => update("coverTemplateUid", t.templateUid)}
+                >
+                  <strong>{t.templateName || t.name || t.templateUid}</strong>
+                  <div className="meta">{t.category || ""}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <p className="ant-sub">내지 템플릿을 선택하세요.</p>
             <div className="ant-grid">
-              {templates.map((t) => (
+              {contentTemplates.map((t) => (
                 <div
                   key={t.templateUid}
                   className={`ant-spec-card ${form.contentTemplateUid === t.templateUid ? "selected" : ""}`}
@@ -198,7 +237,7 @@ export default function AnthologyNewPage() {
           </div>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <p className="ant-sub">참여자를 추가하세요. (나중에 추가 가능)</p>
             {contributors.map((c, idx) => (

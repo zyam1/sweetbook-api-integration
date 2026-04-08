@@ -32,6 +32,15 @@ export async function updateCover(id, payload) {
   return data;
 }
 
+export async function uploadAnthologyCoverPhoto(id, file) {
+  const form = new FormData();
+  form.append('file', file);
+  const { data } = await client.post(`/anthology/${id}/cover/photo`, form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data; // { fileName }
+}
+
 export async function listContributors(id) {
   const { data } = await client.get(`/anthology/${id}/contributors`);
   return data;
@@ -103,19 +112,25 @@ export async function reorderContributors(id, orderedIds) {
   return data;
 }
 
-export async function aiInspect(token) {
-  const { data } = await client.post(`/anthology/submit/${token}/ai-inspect`);
+export async function aiInspect() {
+  const { data } = await client.post('/anthology/contrib/me/ai-inspect', null, {
+    headers: contribHeaders(),
+  });
   return data;
 }
 
 // 참여자 제출 확정 / 취소 (3-state 플로우)
-export async function submitContribution(token) {
-  const { data } = await client.post(`/anthology/submit/${token}/finalize`);
+export async function submitContribution() {
+  const { data } = await client.post('/anthology/contrib/me/finalize', null, {
+    headers: contribHeaders(),
+  });
   return data;
 }
 
-export async function unsubmitContribution(token) {
-  const { data } = await client.delete(`/anthology/submit/${token}/finalize`);
+export async function unsubmitContribution() {
+  const { data } = await client.delete('/anthology/contrib/me/finalize', {
+    headers: contribHeaders(),
+  });
   return data;
 }
 

@@ -10,7 +10,6 @@ import {
   submitContribution,
   unsubmitContribution,
 } from './api';
-import Modal from '../../components/ui/Modal';
 import './anthology.css';
 import './ContributorUploadPage.css';
 
@@ -32,7 +31,6 @@ export default function ContributorUploadPage() {
   const [inspectCount, setInspectCount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
 
   // 참여자 상태: PENDING(파일 없음) / DRAFT(파일 있음) / SUBMITTED(제출 완료)
   const myStatus =
@@ -53,7 +51,7 @@ export default function ContributorUploadPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await submitContribution(token);
+      await submitContribution();
       await reloadAll();
     } catch (e) {
       setSubmitError(e?.response?.data?.error || e.message);
@@ -62,20 +60,11 @@ export default function ContributorUploadPage() {
     }
   };
 
-  const handleSubmitClick = () => {
-    const danger = aiResult?.summary?.danger ?? 0;
-    if (aiResult && danger > 0) {
-      setConfirmOpen(true);
-      return;
-    }
-    doSubmit();
-  };
-
   const handleUnsubmit = async () => {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      await unsubmitContribution(token);
+      await unsubmitContribution();
       await reloadAll();
     } catch (e) {
       setSubmitError(e?.response?.data?.error || e.message);
@@ -88,7 +77,7 @@ export default function ContributorUploadPage() {
     setAiLoading(true);
     setAiError(null);
     try {
-      const data = await aiInspect(token);
+      const data = await aiInspect();
       setAiResult(data);
       setInspectCount((n) => n + 1);
     } catch (e) {
@@ -144,7 +133,7 @@ export default function ContributorUploadPage() {
       for (const file of files) {
         await uploadContributionFile(file);
       }
-      load();
+      reloadAll();
     } catch (e) {
       setError(e?.response?.data?.error || e.message);
     } finally {
@@ -182,7 +171,7 @@ export default function ContributorUploadPage() {
             <button
               type="button"
               className="ant-btn ant-btn-primary"
-              onClick={handleSubmitClick}
+              onClick={doSubmit}
               disabled={submitting}
             >
               {submitting ? '제출 중...' : '제출하기'}
@@ -344,19 +333,6 @@ export default function ContributorUploadPage() {
         )}
       </div>
 
-      <Modal
-        open={confirmOpen}
-        title="위험 항목이 있습니다"
-        message={`AI 분석에서 위험 항목이 ${aiResult?.summary?.danger ?? 0}개 발견되었습니다. 그래도 제출하시겠습니까?`}
-        variant="danger"
-        confirmText="제출"
-        cancelText="취소"
-        onClose={() => setConfirmOpen(false)}
-        onConfirm={() => {
-          setConfirmOpen(false);
-          doSubmit();
-        }}
-      />
     </div>
   );
 }

@@ -57,6 +57,28 @@ const ownerUpload = multer({
   limits: { fileSize: 200 * 1024 * 1024 },
 });
 
+// multer 설정 - 표지 이미지 업로드용 (req.params.id)
+const coverUpload = multer({
+  storage: multer.diskStorage({
+    destination(req, file, cb) {
+      const dest = path.join(
+        __dirname,
+        '..',
+        'uploads',
+        'anthology',
+        String(req.params.id),
+        'cover'
+      );
+      fs.mkdirSync(dest, { recursive: true });
+      cb(null, dest);
+    },
+    filename(req, file, cb) {
+      cb(null, `${Date.now()}-${file.originalname}`);
+    },
+  }),
+  limits: { fileSize: 200 * 1024 * 1024 },
+});
+
 // 내 앤솔로지 목록 조회 (role=owner | contributor)
 router.get('/', authRequired, async (req, res, next) => {
   try {
@@ -189,6 +211,28 @@ router.patch('/:id/cover', authRequired, async (req, res, next) => {
     next(err);
   }
 });
+
+// 표지 이미지 업로드
+router.post(
+  '/:id/cover/photo',
+  authRequired,
+  coverUpload.single('file'),
+  async (req, res, next) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: 'FILE_REQUIRED' });
+      }
+      const data = await anthologyService.uploadCoverPhoto(
+        Number(req.params.id),
+        req.user.id,
+        req.file
+      );
+      res.json(data);
+    } catch (err) {
+      next(err);
+    }
+  }
+);
 
 // contributor 추가
 router.post('/:id/contributors', authRequired, async (req, res, next) => {

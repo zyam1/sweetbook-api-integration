@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { deleteAnthology, getAnthology, listContributors, reorderContributors } from './api';
 import FinalizeModal from './FinalizeModal';
+import CoverSettingsModal from './CoverSettingsModal';
 import Modal from '../../components/ui/Modal';
 import './anthology.css';
 import './AnthologyDashboardPage.css';
@@ -15,6 +16,7 @@ export default function AnthologyDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFinalize, setShowFinalize] = useState(false);
+  const [showCoverModal, setShowCoverModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
@@ -185,13 +187,21 @@ export default function AnthologyDashboardPage() {
           <div className="ant-card">
             <div className="ant-row-between">
               <h2>표지 설정</h2>
-              <span className={`ant-badge ${anthology.cover ? 'lavender' : 'pink'}`}>
-                {anthology.cover ? '설정됨' : '미설정'}
+              <span className={`ant-badge ${anthology.coverTemplateUid ? 'lavender' : 'pink'}`}>
+                {anthology.coverTemplateUid ? '설정됨' : '미설정'}
               </span>
             </div>
             <p className="ant-sub" style={{ marginTop: 10 }}>
               템플릿과 표지 이미지를 선택하세요. 마감 시 books → photos → cover 순으로 호출됩니다.
             </p>
+            <div style={{ marginTop: 12 }}>
+              <button
+                className="ant-btn ant-btn-primary"
+                onClick={() => setShowCoverModal(true)}
+              >
+                표지 설정
+              </button>
+            </div>
           </div>
 
           <div className="ant-card">
@@ -236,6 +246,17 @@ export default function AnthologyDashboardPage() {
         <FinalizeModal
           anthology={{ ...anthology, contributorCount: contributors.length }}
           onClose={() => setShowFinalize(false)}
+        />
+      )}
+
+      {showCoverModal && (
+        <CoverSettingsModal
+          anthology={anthology}
+          onClose={() => setShowCoverModal(false)}
+          onSaved={async () => {
+            const a = await getAnthology(id);
+            setAnthology(a);
+          }}
         />
       )}
     </div>

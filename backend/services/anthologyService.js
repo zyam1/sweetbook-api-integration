@@ -70,7 +70,7 @@ const anthologyService = {
   },
 
   // 합본 생성
-  async create(ownerId, { title, description, bookSpecUid, deadline, password }) {
+  async create(ownerId, { title, description, bookSpecUid, deadline, password, contentTemplateUid, coverTemplateUid }) {
     if (!password || !String(password).trim()) {
       const err = new Error('PASSWORD_REQUIRED');
       err.statusCode = 400;
@@ -86,6 +86,8 @@ const anthologyService = {
         bookSpecUid,
         deadline: deadline ? new Date(deadline) : null,
         invitePasswordHash,
+        contentTemplateUid: contentTemplateUid ?? null,
+        coverTemplateUid: coverTemplateUid ?? null,
       },
     });
   },
@@ -126,6 +128,22 @@ const anthologyService = {
         coverBackPhoto: backPhoto ?? null,
       },
     });
+  },
+
+  // 표지 이미지 업로드 (주최자 전용) — multer가 디스크 저장 후 파일명만 반환
+  async uploadCoverPhoto(id, ownerId, file) {
+    const anthology = await db.anthology.findUnique({ where: { id } });
+    if (!anthology) {
+      const err = new Error('ANTHOLOGY_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (anthology.ownerId !== ownerId) {
+      const err = new Error('FORBIDDEN');
+      err.statusCode = 403;
+      throw err;
+    }
+    return { fileName: file.filename };
   },
 
   // contributor 추가 (초대)
