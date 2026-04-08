@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listAnthologies } from './api';
 import { orderStatusLabel } from './orderStatus';
+import { anthologyStatusLabel } from './anthologyStatus';
 import './anthology.css';
 import './AnthologyListPage.css';
 
@@ -64,7 +65,7 @@ export default function AnthologyListPage() {
             <Link key={a.id} to={`/anthology/${a.id}`} className="ant-anthology-card">
               <div className="ant-row-between">
                 <div className="ant-anthology-card-title">{a.title || '제목 없음'}</div>
-                <span className="ant-badge lavender">{a.latestOrder?.status ? orderStatusLabel(a.latestOrder.status) : (a.status || 'DRAFT')}</span>
+                <span className="ant-badge lavender">{a.latestOrder?.status ? orderStatusLabel(a.latestOrder.status) : anthologyStatusLabel(a.status || 'DRAFT')}</span>
               </div>
               <div className="ant-anthology-card-meta">
                 {a.bookSpecUid || ''} · {filled}/{total || '?'}명 · {a.pageCount ?? 0}p

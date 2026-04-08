@@ -27,7 +27,7 @@ export default function FinalizeModal({ anthology, onClose }) {
   return (
     <div className="ant-modal-backdrop" onClick={onClose}>
       <div className="ant-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>합동지 최종화</h2>
+        <h2>합동지 마감</h2>
         <p className="ant-sub">지금 마감하면 더 이상 원고를 추가하거나 수정할 수 없어요.</p>
 
         <div className="ant-card-soft">

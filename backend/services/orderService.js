@@ -122,11 +122,13 @@ const orderService = {
     const ref = finalOrder.externalRef;
     const match = ref && /^anthology:(.+)$/.exec(ref);
     if (match) {
-      const anthologyId = match[1];
-      const anth = await db.anthology.findUnique({
-        where: { id: anthologyId },
-        select: { id: true, title: true, status: true, bookUid: true },
-      });
+      const anthologyId = Number(match[1]);
+      const anth = Number.isInteger(anthologyId)
+        ? await db.anthology.findUnique({
+            where: { id: anthologyId },
+            select: { id: true, title: true, status: true, bookUid: true },
+          })
+        : null;
       if (anth) {
         anthology = anth;
         const submissions = await db.contributorSubmission.findMany({

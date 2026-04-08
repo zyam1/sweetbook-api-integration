@@ -5,8 +5,11 @@ import FinalizeModal from './FinalizeModal';
 import CoverSettingsModal from './CoverSettingsModal';
 import Modal from '../../components/ui/Modal';
 import { orderStatusLabel } from './orderStatus';
+import { anthologyStatusLabel } from './anthologyStatus';
 import './anthology.css';
 import './AnthologyDashboardPage.css';
+
+const coverBaseUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'}/uploads/anthology`;
 
 // Figma: SweetPress / Anthology / Dashboard (:id) (node 112:60)
 export default function AnthologyDashboardPage() {
@@ -80,6 +83,9 @@ export default function AnthologyDashboardPage() {
 
   const submitted = contributors.filter((c) => c.status === 'SUBMITTED').length;
   const pending = contributors.length - submitted;
+  const hasBothCovers = !!anthology.coverFrontPhoto && !!anthology.coverBackPhoto;
+  const hasEnoughPages = (anthology.pageCount ?? 0) >= 24;
+  const canFinalize = hasBothCovers && hasEnoughPages;
   const statusLabel = (s) =>
     s === 'SUBMITTED' ? '제출완료' : s === 'DRAFT' ? '작성중' : '대기';
 
@@ -157,7 +163,7 @@ export default function AnthologyDashboardPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div className="ant-row">
             <h1>{anthology.title}</h1>
-            <span className="ant-badge lavender">{anthology.status || 'DRAFT'}</span>
+            <span className="ant-badge lavender">{anthologyStatusLabel(anthology.status || 'DRAFT')}</span>
           </div>
           <p className="ant-sub">
             {anthology.bookSpecUid || ''} · 페이지 {anthology.pageCount ?? 0}p · 참여자 {contributors.length}명
@@ -168,8 +174,17 @@ export default function AnthologyDashboardPage() {
           <button type="button" className="ant-btn" onClick={() => setShowDeleteConfirm(true)}>
             삭제
           </button>
-          <button className="ant-btn ant-btn-primary" onClick={() => setShowFinalize(true)}>
-            최종화
+          <button
+            className="ant-btn ant-btn-primary"
+            onClick={() => setShowFinalize(true)}
+            disabled={!canFinalize}
+            title={
+              !canFinalize
+                ? '표지(앞/뒤)와 24p 이상의 내지가 필요합니다.'
+                : undefined
+            }
+          >
+            마감
           </button>
         </div>
       </div>
@@ -202,8 +217,28 @@ export default function AnthologyDashboardPage() {
             </span>
           </div>
           <p className="ant-sub" style={{ marginTop: 10 }}>
-            템플릿과 표지 이미지를 선택하세요. 마감 시 books → photos → cover 순으로 호출됩니다.
+            앞/뒤 표지 이미지를 업로드하세요. 마감 시 books → photos → cover 순으로 호출됩니다.
           </p>
+          <div className="cover-thumbs">
+            {['front', 'back'].map((side) => {
+              const fileName = side === 'front' ? anthology.coverFrontPhoto : anthology.coverBackPhoto;
+              const url = fileName ? `${coverBaseUrl}/${id}/cover/${fileName}` : '';
+              return (
+                <div key={side} className="cover-thumb">
+                  <div className="cover-thumb-frame">
+                    {url ? (
+                      <img src={url} alt={`${side} cover`} />
+                    ) : (
+                      <span className="ant-sub-sm">미설정</span>
+                    )}
+                  </div>
+                  <p className="ant-sub-sm" style={{ marginTop: 6 }}>
+                    {side === 'front' ? '앞표지' : '뒤표지'}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
           <div style={{ marginTop: 12 }}>
             <button
               className="ant-btn ant-btn-primary"
@@ -211,10 +246,19 @@ export default function AnthologyDashboardPage() {
             >
               표지 설정
             </button>
-            <Link to={`/anthology/${id}/photos`} className="ant-btn" style={{ marginLeft: 8 }}>
-              사진/순서 관리
+          </div>
+        </div>
+
+        <div className="ant-card">
+          <div className="ant-row-between">
+            <h2>사진/순서 관리</h2>
+            <Link to={`/anthology/${id}/photos`} className="ant-btn">
+              관리하기
             </Link>
           </div>
+          <p className="ant-sub" style={{ marginTop: 10 }}>
+            참여자들이 제출한 사진을 확인하고 내지 순서를 조정합니다.
+          </p>
         </div>
 
         <div className="ant-card">
