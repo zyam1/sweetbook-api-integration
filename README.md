@@ -25,7 +25,8 @@
 - Node.js 18+
 - SweetBook Sandbox API Key
 
-> DB는개인 서버에 구성되어 있어 별도 설치/접속 정보 입력이 필요 없습니다.
+> DB는 평가용 개인 서버에 구성되어 있어 별도 설치가 필요 없습니다.
+> `DATABASE_URL`은 **제출한 구글폼에 함께 전달**드렸으니 아래 `.env` 설정 시 그대로 붙여넣어 주세요.
 
 ### 설치 및 실행
 
@@ -43,8 +44,9 @@ cp .env.example .env
 # backend/.env 파일 열어 아래 값 입력:
 #   SWEETBOOK_API_KEY=sandbox_sk_...
 #   SWEETBOOK_API_BASE_URL=https://api-sandbox.sweetbook.com/v1
-#   CONTRIBUTOR_JWT_SECRET=아무_문자열   # 임시용 — 서버 내부에서만 사용되므로 어떤 값이든 가능
-# (DATABASE_URL은 개인 서버 DB로 이미 설정되어 있어 수정 불필요)
+#   DATABASE_URL=...                    # ★ 제출한 구글폼에 함께 전달드린 값을 그대로 붙여넣기
+#   JWT_SECRET=아무_문자열              # 임시용 — 어떤 값이든 가능
+#   CONTRIBUTOR_JWT_SECRET=아무_문자열  # 임시용 — 어떤 값이든 가능
 
 # Backend 실행 (포트 4000)
 npm start
