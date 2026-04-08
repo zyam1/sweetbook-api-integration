@@ -297,6 +297,35 @@ export default function AnthologyDashboardPage() {
 
       <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
         <div className="ant-card">
+          <h2>필수 체크리스트</h2>
+          <ul className="ant-list" style={{ marginTop: 12 }}>
+            <li>
+              <span
+                style={
+                  !hasBothCovers
+                    ? { color: "var(--ant-danger, #c33)" }
+                    : undefined
+                }
+              >
+                {hasBothCovers ? "✅" : "⚠️"} 표지 앞/뒤 업로드
+              </span>
+            </li>
+            <li>
+              <span
+                style={
+                  !hasEnoughPages
+                    ? { color: "var(--ant-danger, #c33)" }
+                    : undefined
+                }
+              >
+                {hasEnoughPages ? "✅" : "⚠️"} 내지 {anthology.pageCount ?? 0}p / 최소 24p
+                {!hasEnoughPages && " (부족)"}
+              </span>
+            </li>
+          </ul>
+        </div>
+
+        <div className="ant-card">
           <div className="ant-row-between">
             <h2>표지 설정</h2>
             <Badge variant={anthology.coverFrontPhoto ? "lavender" : "pink"}>

@@ -6,7 +6,6 @@ import {
   getContributorToken,
   getContribDashboard,
   updateMyHandle,
-  aiInspect,
   submitContribution,
   unsubmitContribution,
 } from './api';
@@ -26,10 +25,6 @@ export default function ContributorUploadPage() {
   const [handleInput, setHandleInput] = useState('');
   const [handleSaving, setHandleSaving] = useState(false);
   const [handleMsg, setHandleMsg] = useState(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResult, setAiResult] = useState(null);
-  const [aiError, setAiError] = useState(null);
-  const [inspectCount, setInspectCount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
 
@@ -73,20 +68,6 @@ export default function ContributorUploadPage() {
       setSubmitError(e?.response?.data?.error || e.message);
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleAiInspect = async () => {
-    setAiLoading(true);
-    setAiError(null);
-    try {
-      const data = await aiInspect();
-      setAiResult(data);
-      setInspectCount((n) => n + 1);
-    } catch (e) {
-      setAiError(e?.response?.data?.error || e.message);
-    } finally {
-      setAiLoading(false);
     }
   };
 
@@ -272,63 +253,6 @@ export default function ContributorUploadPage() {
       </div>
 
       {error && <p className="ant-error">{error}</p>}
-
-      <div className="ant-card ai-inspect-card">
-        <div className="ant-row-between">
-          <div>
-            <h2>🤖 AI 인쇄 위험 분석</h2>
-            <p className="ant-sub" style={{ marginTop: 6 }}>
-              해상도, 잘림, 색상 등 인쇄 시 발생할 수 있는 위험을 AI가 점검합니다. 무제한 재검수 가능.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="ant-btn ai-inspect-btn"
-            disabled={aiLoading || submissions.length === 0}
-            onClick={handleAiInspect}
-          >
-            {aiLoading ? '분석 중...' : aiResult ? '🔄 다시 분석' : '🤖 AI 분석 시작'}
-          </button>
-        </div>
-
-        {aiError && <p className="ant-error" style={{ marginTop: 10 }}>{aiError}</p>}
-
-        {aiResult && (
-          <div className="ai-result">
-            <div className="ai-summary">
-              <span className="ai-chip ok">✅ 통과 {aiResult.summary?.ok ?? 0}</span>
-              <span className="ai-chip warn">⚠️ 주의 {aiResult.summary?.warn ?? 0}</span>
-              <span className="ai-chip danger">🚨 위험 {aiResult.summary?.danger ?? 0}</span>
-              <span className="ai-chip count">재분석 {inspectCount}회</span>
-            </div>
-            <ul className="ai-result-list">
-              {(aiResult.pages || aiResult.items || []).map((p, i) => {
-                const level = p.level || p.severity || 'ok';
-                return (
-                  <li key={p.id || p.fileName || i} className={`ai-result-row level-${level}`}>
-                    <div className="ai-row-head">
-                      <span className={`ai-level-badge ${level}`}>
-                        {level === 'danger' ? '🚨 위험' : level === 'warn' ? '⚠️ 주의' : '✅ 통과'}
-                      </span>
-                      <span className="ai-file">{p.fileName || p.name || `페이지 ${i + 1}`}</span>
-                    </div>
-                    {Array.isArray(p.issues) && p.issues.length > 0 && (
-                      <ul className="ai-issues">
-                        {p.issues.map((iss, j) => (
-                          <li key={j}>{typeof iss === 'string' ? iss : iss.message}</li>
-                        ))}
-                      </ul>
-                    )}
-                    {p.recommendation && (
-                      <p className="ai-reco">💡 {p.recommendation}</p>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-      </div>
 
       <div className="ant-card">
         <h2>업로드된 사진 ({submissions.length})</h2>
