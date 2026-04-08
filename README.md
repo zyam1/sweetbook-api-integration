@@ -48,6 +48,9 @@ cp .env.example .env
 #   JWT_SECRET=아무_문자열              # 임시용 — 어떤 값이든 가능
 #   CONTRIBUTOR_JWT_SECRET=아무_문자열  # 임시용 — 어떤 값이든 가능
 
+
+npx prisma generate
+
 # Backend 실행 (포트 4000)
 npm start
 ```
