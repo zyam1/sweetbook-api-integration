@@ -351,11 +351,6 @@ const anthologyService = {
       err.statusCode = 404;
       throw err;
     }
-    if (submission.contributor.status === 'SUBMITTED') {
-      const err = new Error('SUBMITTED_LOCKED');
-      err.statusCode = 409;
-      throw err;
-    }
     await db.contributorSubmission.delete({ where: { id: submissionId } });
     try {
       await require('fs/promises').unlink(submission.storedPath);

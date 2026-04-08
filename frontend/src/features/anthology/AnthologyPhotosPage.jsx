@@ -62,18 +62,13 @@ export default function AnthologyPhotosPage() {
     );
   };
 
-  const handleDelete = async (sid, status) => {
-    if (status === 'SUBMITTED') return;
+  const handleDelete = async (sid) => {
     if (!window.confirm('정말 이 사진을 삭제하시겠습니까?')) return;
     try {
       await deleteSubmission(id, sid);
       setItems((cur) => cur.filter((s) => s.id !== sid));
     } catch (e) {
-      if (e?.response?.status === 409) {
-        alert('제출 완료된 참여자의 사진은 삭제할 수 없습니다.');
-      } else {
-        setError(e?.response?.data?.error || e.message);
-      }
+      setError(e?.response?.data?.error || e.message);
     }
   };
 
@@ -115,7 +110,6 @@ export default function AnthologyPhotosPage() {
           >
             {items.map((s, idx) => {
               const status = s.contributor?.status || 'PENDING';
-              const isSubmitted = status === 'SUBMITTED';
               return (
                 <div
                   key={s.id}
@@ -163,8 +157,7 @@ export default function AnthologyPhotosPage() {
                       type="button"
                       className="ant-btn"
                       style={{ fontSize: 11, padding: '4px 8px' }}
-                      disabled={isSubmitted}
-                      onClick={() => handleDelete(s.id, status)}
+                      onClick={() => handleDelete(s.id)}
                     >
                       삭제
                     </button>
