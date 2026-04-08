@@ -1,14 +1,58 @@
 /* HomePage 전용 레이아웃 — 기존 ant-* 토큰/클래스 재사용 기반 */
 
 .home-hero {
-  background: var(--ant-surface);
-  border: 1px solid var(--ant-border);
-  border-radius: var(--ant-radius-card);
-  padding: 56px 48px;
+  /* ant-page 좌우(64px)·상단(48px) 패딩을 상쇄하여 가로 전체 띠로 표현 */
+  position: relative;
+  margin: -48px -64px 0;
+  padding: 72px 64px;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  border: none;
+  border-radius: 0;
+}
+
+/* 반투명 어두운 오버레이 (배경 이미지 위) */
+.home-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.45) 0%,
+    rgba(0, 0, 0, 0.3) 100%
+  );
+  pointer-events: none;
+}
+
+.home-hero-inner {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 18px;
-  background-image: linear-gradient(135deg, var(--ant-purple-soft) 0%, var(--ant-surface) 60%);
+  max-width: 1080px;
+  margin: 0 auto;
+  color: #fff;
+}
+
+.home-hero-inner .home-hero-title,
+.home-hero-inner .home-hero-sub {
+  color: #fff;
+}
+
+.home-hero-guide {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 24px;
+}
+
+@media (max-width: 900px) {
+  .home-hero-guide { grid-template-columns: 1fr; }
+}
+
+.home-hero-guide .home-guide-card {
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .home-hero-title {

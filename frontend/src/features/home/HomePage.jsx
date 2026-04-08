@@ -9,6 +9,7 @@ import {
 import "../anthology/anthology.css";
 import "./HomePage.css";
 import Badge from "../../components/Badge";
+import heroImage from "../../assets/images/creative-workspace.png";
 
 // Figma: SweetPress (fileKey: 7WJrsI7QOEOrXFP1x4LtAH) — 디자인 토큰/ant-* 공통 클래스 재사용
 export default function HomePage() {
@@ -82,23 +83,53 @@ export default function HomePage() {
   return (
     <div className="ant-page">
       {/* 1. 히어로 */}
-      <section className="home-hero">
-        <h1 className="home-hero-title">함께 엮는 책, 합동지</h1>
-        <p className="home-hero-sub">
-          여러 작가의 글과 사진을 한 권의 포토북으로 — 판형 선택부터 최종
-          주문까지, 한 곳에서 간편하게.
-        </p>
-        <div className="home-hero-actions">
-          <Link to="/anthology/new" className="ant-btn ant-btn-primary">
-            새 합동지 만들기
-          </Link>
-          <Link to="/anthology" className="ant-btn">
-            전체 합동지 보기
-          </Link>
+      <section
+        className="home-hero"
+        style={{ backgroundImage: `url(${heroImage})` }}
+      >
+        <div className="home-hero-inner">
+          <h1 className="home-hero-title">함께 엮는 책, 합동지</h1>
+          <p className="home-hero-sub">
+            여러 작가의 글과 사진을 한 권의 포토북으로 — 판형 선택부터 최종
+            주문까지, 한 곳에서 간편하게.
+          </p>
+          <div className="home-hero-actions">
+            <Link to="/anthology/new" className="ant-btn ant-btn-primary">
+              새 합동지 만들기
+            </Link>
+            <Link to="/anthology" className="ant-btn">
+              전체 합동지 보기
+            </Link>
+          </div>
+
+          {/* 빠른 시작 3단계 가이드 (hero 내부) */}
+          <div className="home-hero-guide">
+            <div className="home-guide-card">
+              <span className="home-guide-num">1</span>
+              <div className="home-guide-title">판형 · 참여자 설정</div>
+              <p className="home-guide-desc">
+                원하는 판형을 고르고 함께할 참여자를 초대하세요.
+              </p>
+            </div>
+            <div className="home-guide-card">
+              <span className="home-guide-num">2</span>
+              <div className="home-guide-title">원고 모으기</div>
+              <p className="home-guide-desc">
+                참여자들이 각자 글과 사진을 업로드하면 자동으로 정리돼요.
+              </p>
+            </div>
+            <div className="home-guide-card">
+              <span className="home-guide-num">3</span>
+              <div className="home-guide-title">최종화 · 주문</div>
+              <p className="home-guide-desc">
+                페이지를 확정하고 주문하면 인쇄·배송까지 진행됩니다.
+              </p>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* 2. 내 합동지 현황 */}
+      {/* 3. 내 합동지 현황 */}
       <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <div className="home-section-head">
           <h2>내 합동지 현황</h2>
@@ -108,36 +139,6 @@ export default function HomePage() {
         {ownedError && <p className="ant-error">{ownedError}</p>}
         {!ownedLoading && !ownedError && owned.length === 0 && emptyState}
         {!ownedLoading && !ownedError && owned.length > 0 && renderCards(owned)}
-      </section>
-
-      {/* 3. 빠른 시작 3단계 가이드 */}
-      <section style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <div className="home-section-head">
-          <h2>빠른 시작 가이드</h2>
-        </div>
-        <div className="home-grid-3">
-          <div className="home-guide-card">
-            <span className="home-guide-num">1</span>
-            <div className="home-guide-title">판형 · 참여자 설정</div>
-            <p className="home-guide-desc">
-              원하는 판형을 고르고 함께할 참여자를 초대하세요.
-            </p>
-          </div>
-          <div className="home-guide-card">
-            <span className="home-guide-num">2</span>
-            <div className="home-guide-title">원고 모으기</div>
-            <p className="home-guide-desc">
-              참여자들이 각자 글과 사진을 업로드하면 자동으로 정리돼요.
-            </p>
-          </div>
-          <div className="home-guide-card">
-            <span className="home-guide-num">3</span>
-            <div className="home-guide-title">최종화 · 주문</div>
-            <p className="home-guide-desc">
-              페이지를 확정하고 주문하면 인쇄·배송까지 진행됩니다.
-            </p>
-          </div>
-        </div>
       </section>
 
       {/* 4. 바로가기 */}
