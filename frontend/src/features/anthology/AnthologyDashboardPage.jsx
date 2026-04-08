@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { deleteAnthology, getAnthology, listContributors, reorderContributors } from './api';
+import { deleteAnthology, getAnthology, listAllSubmissions, listContributors, reorderContributors } from './api';
 import FinalizeModal from './FinalizeModal';
 import CoverSettingsModal from './CoverSettingsModal';
 import Modal from '../../components/ui/Modal';
-import { orderStatusLabel } from './orderStatus';
-import { anthologyStatusLabel } from './anthologyStatus';
+import Badge from '../../components/Badge';
+import { orderStatusLabel, orderBadgeClass } from './orderStatus';
+import { anthologyStatusLabel, anthologyBadgeClass } from './anthologyStatus';
 import './anthology.css';
 import './AnthologyDashboardPage.css';
 
@@ -24,6 +25,21 @@ export default function AnthologyDashboardPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+  const [photosByContributor, setPhotosByContributor] = useState({});
+
+  // storedPath → 공개 URL 변환 (AnthologyPhotosPage와 동일 규칙)
+  const toPublicUrl = (storedPath) => {
+    if (!storedPath) return '';
+    if (/^https?:\/\//.test(storedPath)) return storedPath;
+    const idx = storedPath.indexOf('uploads/');
+    if (idx >= 0) {
+      const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+      return `${base}/${storedPath.substring(idx)}`;
+    }
+    return storedPath;
+  };
 
   const handleDelete = async () => {
     try {
@@ -50,27 +66,61 @@ export default function AnthologyDashboardPage() {
     );
   };
 
-  const handleCopyLink = (e, token) => {
+  const showToast = (message, variant) => {
+    setToast({ message, variant });
+    setTimeout(() => setToast(null), 2000);
+  };
+
+  const handleCopyLink = async (e, token) => {
     e.stopPropagation();
     if (!token) return;
     const url = `${window.location.origin}/c/${token}`;
-    navigator.clipboard?.writeText(url);
-    setCopiedId(token);
-    setTimeout(() => setCopiedId((cur) => (cur === token ? null : cur)), 1500);
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        if (!ok) throw new Error('execCommand failed');
+      }
+      setCopiedId(token);
+      setTimeout(() => setCopiedId((cur) => (cur === token ? null : cur)), 1500);
+      showToast('제출 링크가 복사되었습니다', 'success');
+    } catch {
+      showToast('복사에 실패했습니다', 'error');
+    }
   };
 
-  const handleRowClick = (token) => {
-    if (!token) return;
-    navigate(`/c/${token}`);
+  const handleRowToggle = (cid) => {
+    if (!cid) return;
+    setExpandedId((cur) => (cur === cid ? null : cid));
   };
 
   useEffect(() => {
     let alive = true;
-    Promise.all([getAnthology(id), listContributors(id).catch(() => [])])
-      .then(([a, c]) => {
+    Promise.all([
+      getAnthology(id),
+      listContributors(id).catch(() => []),
+      listAllSubmissions(id).catch(() => []),
+    ])
+      .then(([a, c, subs]) => {
         if (!alive) return;
         setAnthology(a);
         setContributors(Array.isArray(c) ? c : c?.items || []);
+        const list = Array.isArray(subs) ? subs : subs?.items || [];
+        const grouped = {};
+        for (const s of list) {
+          const key = s.contributorId ?? s.contributor?.id;
+          if (key == null) continue;
+          (grouped[key] = grouped[key] || []).push(s);
+        }
+        setPhotosByContributor(grouped);
       })
       .catch((e) => alive && setError(e?.response?.data?.error || e.message))
       .finally(() => alive && setLoading(false));
@@ -92,6 +142,7 @@ export default function AnthologyDashboardPage() {
   const latestOrder = anthology.latestOrder;
   if (latestOrder) {
     const orderLabel = orderStatusLabel(latestOrder.status);
+    const orderBadge = orderBadgeClass(latestOrder.status);
     const createdAtText = latestOrder.createdAt
       ? new Date(latestOrder.createdAt).toLocaleString('ko-KR')
       : '-';
@@ -107,7 +158,7 @@ export default function AnthologyDashboardPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div className="ant-row">
               <h1>{anthology.title}</h1>
-              <span className="ant-badge lavender">{orderLabel}</span>
+              <Badge variant={orderBadge}>{orderLabel}</Badge>
             </div>
             <p className="ant-sub">
               {anthology.bookSpecUid || ''} · 페이지 {anthology.pageCount ?? 0}p · 참여자 {contributors.length}명
@@ -118,7 +169,7 @@ export default function AnthologyDashboardPage() {
         <div className="ant-card">
           <div className="ant-row-between">
             <h2>배송 정보</h2>
-            <span className="ant-badge lavender">{orderLabel}</span>
+            <Badge variant={orderBadge}>{orderLabel}</Badge>
           </div>
           <ul className="ant-list" style={{ marginTop: 12 }}>
             <li className="ant-row-between">
@@ -163,7 +214,7 @@ export default function AnthologyDashboardPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div className="ant-row">
             <h1>{anthology.title}</h1>
-            <span className="ant-badge lavender">{anthologyStatusLabel(anthology.status || 'DRAFT')}</span>
+            <Badge variant={anthologyBadgeClass(anthology.status || 'DRAFT')}>{anthologyStatusLabel(anthology.status || 'DRAFT')}</Badge>
           </div>
           <p className="ant-sub">
             {anthology.bookSpecUid || ''} · 페이지 {anthology.pageCount ?? 0}p · 참여자 {contributors.length}명
@@ -212,9 +263,9 @@ export default function AnthologyDashboardPage() {
         <div className="ant-card">
           <div className="ant-row-between">
             <h2>표지 설정</h2>
-            <span className={`ant-badge ${anthology.coverFrontPhoto ? 'lavender' : 'pink'}`}>
+            <Badge variant={anthology.coverFrontPhoto ? 'lavender' : 'pink'}>
               {anthology.coverFrontPhoto ? '설정됨' : '미설정'}
-            </span>
+            </Badge>
           </div>
           <p className="ant-sub" style={{ marginTop: 10 }}>
             앞/뒤 표지 이미지를 업로드하세요. 마감 시 books → photos → cover 순으로 호출됩니다.
@@ -272,34 +323,59 @@ export default function AnthologyDashboardPage() {
                 const cid = c.id;
                 const token = c.token;
                 const copied = copiedId === token;
+                const expanded = expandedId === cid;
+                const photos = photosByContributor[cid] || [];
                 return (
                   <li
                     key={cid || token}
-                    className="participant-row"
+                    className={`participant-row${expanded ? ' expanded' : ''}`}
                     draggable
                     onDragStart={() => handleDragStart(idx)}
                     onDragOver={handleDragOver}
                     onDrop={() => handleDrop(idx)}
-                    onClick={() => handleRowClick(token)}
+                    onClick={() => handleRowToggle(cid)}
                   >
-                    <div>
-                      <div className="name">{c.handle || c.name || '이름 없음'}</div>
-                      <div className="meta">{c.email || `${c.submissionCount ?? 0}건 제출`}</div>
+                    <div className="participant-row-main">
+                      <div>
+                        <div className="name">{c.handle || c.name || '이름 없음'}</div>
+                        <div className="meta">{c.email || `${c.submissionCount ?? 0}건 제출`}</div>
+                      </div>
+                      <div className="ant-row" style={{ gap: 8 }}>
+                        <span className={`badge badge-${status.toLowerCase()}`}>
+                          {statusLabel(status)}
+                        </span>
+                        <button
+                          type="button"
+                          className="ant-btn"
+                          disabled={!token}
+                          onClick={(e) => handleCopyLink(e, token)}
+                        >
+                          {copied ? '복사됨' : '제출 링크 복사'}
+                        </button>
+                        <span className="arrow" aria-hidden>{expanded ? '⌄' : '›'}</span>
+                      </div>
                     </div>
-                    <div className="ant-row" style={{ gap: 8 }}>
-                      <span className={`badge badge-${status.toLowerCase()}`}>
-                        {statusLabel(status)}
-                      </span>
-                      <button
-                        type="button"
-                        className="ant-btn"
-                        disabled={!token}
-                        onClick={(e) => handleCopyLink(e, token)}
+                    {expanded && (
+                      <div
+                        className="participant-photos"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        {copied ? '복사됨' : '제출 링크 복사'}
-                      </button>
-                      <span className="arrow" aria-hidden>›</span>
-                    </div>
+                        {photos.length === 0 ? (
+                          <p className="ant-sub-sm">제출된 사진이 없습니다.</p>
+                        ) : (
+                          <div className="participant-photos-grid">
+                            {photos.map((p) => (
+                              <div key={p.id} className="participant-photo-thumb">
+                                <img
+                                  src={toPublicUrl(p.storedPath)}
+                                  alt={p.fileName || `submission-${p.id}`}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </li>
                 );
               })}
@@ -335,6 +411,12 @@ export default function AnthologyDashboardPage() {
             setAnthology(a);
           }}
         />
+      )}
+
+      {toast && (
+        <div className={`ant-toast ant-toast-${toast.variant || 'success'}`} role="status">
+          {toast.message}
+        </div>
       )}
     </div>
   );

@@ -12,6 +12,7 @@ import {
 } from './api';
 import './anthology.css';
 import './ContributorUploadPage.css';
+import Badge from '../../components/Badge';
 
 // Figma: SweetPress / Submit / Upload (:token) (node 115:60)
 export default function ContributorUploadPage() {
@@ -159,7 +160,7 @@ export default function ContributorUploadPage() {
         <div className="ant-row" style={{ gap: 8, alignItems: 'center' }}>
           {myStatus === 'SUBMITTED' ? (
             <>
-              <span className="ant-badge lavender">제출 완료 ✓</span>
+              <Badge variant="lavender">제출 완료 ✓</Badge>
               <button
                 type="button"
                 className="ant-btn"
@@ -354,7 +355,7 @@ export default function ContributorUploadPage() {
                     )}
                   </div>
                 </div>
-                <span className="ant-badge lavender">{s.status || '통과'}</span>
+                <Badge variant="lavender">{s.status || '통과'}</Badge>
               </li>
             ))}
           </ul>

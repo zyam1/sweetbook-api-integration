@@ -72,3 +72,74 @@
   color: #1a1a1a;
 }
 
+/* 참여자 row 인라인 확장 */
+.participant-row {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 14px;
+}
+.participant-row-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.participant-row.expanded {
+  background: #f7f5ff;
+}
+.participant-row.expanded .arrow {
+  transform: rotate(0deg);
+  color: #1a1a1a;
+}
+.participant-photos {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed #e5e1f5;
+  cursor: default;
+}
+.participant-photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
+}
+.participant-photo-thumb {
+  aspect-ratio: 1 / 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f4f2ec;
+  border: 1px solid #ece8f8;
+}
+.participant-photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* 토스트 */
+.ant-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 6px 24px rgba(26, 26, 26, 0.18);
+  z-index: 1000;
+  pointer-events: none;
+  animation: ant-toast-in 0.18s ease-out;
+}
+.ant-toast-success {
+  background: #c9b6ff;
+  color: #1a1a1a;
+}
+.ant-toast-error {
+  background: #ffd1d1;
+  color: #8a1f1f;
+}
+@keyframes ant-toast-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
+}

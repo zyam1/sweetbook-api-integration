@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listOrders } from './api';
-import { orderStatusLabel } from '../anthology/orderStatus';
+import { orderStatusLabel, orderBadgeClass } from '../anthology/orderStatus';
 import '../anthology/anthology.css';
 import './OrderListPage.css';
+import Badge from '../../components/Badge';
 
 // Figma: SweetPress / Order / List
 export default function OrderListPage() {
@@ -60,7 +61,7 @@ export default function OrderListPage() {
             >
               <div className="ant-row-between">
                 <div className="ant-anthology-card-title">주문 {shortUid}</div>
-                <span className="ant-badge lavender">{orderStatusLabel(o.status)}</span>
+                <Badge variant={orderBadgeClass(o.status)}>{orderStatusLabel(o.status)}</Badge>
               </div>
               <div className="ant-anthology-card-meta">
                 수량 {o.quantity ?? 0}권 · {Number(o.totalAmount ?? 0).toLocaleString('ko-KR')}원

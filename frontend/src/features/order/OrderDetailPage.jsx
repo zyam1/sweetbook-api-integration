@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getOrder } from './api';
-import { orderStatusLabel } from '../anthology/orderStatus';
+import { orderStatusLabel, orderBadgeClass } from '../anthology/orderStatus';
 import '../anthology/anthology.css';
 import './OrderDetailPage.css';
+import Badge from '../../components/Badge';
 
 // Figma: SweetPress / Order / Detail
 export default function OrderDetailPage() {
@@ -77,7 +78,7 @@ export default function OrderDetailPage() {
             {order.sweetbookOrderUid} · 생성 {created}{updated && updated !== created ? ` · 수정 ${updated}` : ''}
           </p>
         </div>
-        <span className="ant-badge lavender">{orderStatusLabel(order.status)}</span>
+        <Badge variant={orderBadgeClass(order.status)}>{orderStatusLabel(order.status)}</Badge>
       </div>
 
       <div className="ant-card">

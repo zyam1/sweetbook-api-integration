@@ -5,6 +5,7 @@ import { orderStatusLabel, orderBadgeClass } from './orderStatus';
 import { anthologyStatusLabel, anthologyBadgeClass } from './anthologyStatus';
 import './anthology.css';
 import './AnthologyListPage.css';
+import Badge from '../../components/Badge';
 
 const coverBaseUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000'}/uploads/anthology`;
 
@@ -73,7 +74,7 @@ export default function AnthologyListPage() {
               )}
               <div className="ant-row-between">
                 <div className="ant-anthology-card-title">{a.title || '제목 없음'}</div>
-                <span className={`ant-badge ${a.latestOrder?.status ? orderBadgeClass(a.latestOrder.status) : anthologyBadgeClass(a.status || 'DRAFT')}`}>{a.latestOrder?.status ? orderStatusLabel(a.latestOrder.status) : anthologyStatusLabel(a.status || 'DRAFT')}</span>
+                <Badge variant={a.latestOrder?.status ? orderBadgeClass(a.latestOrder.status) : anthologyBadgeClass(a.status || 'DRAFT')}>{a.latestOrder?.status ? orderStatusLabel(a.latestOrder.status) : anthologyStatusLabel(a.status || 'DRAFT')}</Badge>
               </div>
               <div className="ant-anthology-card-meta">
                 {a.contributorCount ?? 0}명 · {a.pageCount ?? 0}p

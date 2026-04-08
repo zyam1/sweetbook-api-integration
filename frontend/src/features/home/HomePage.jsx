@@ -5,6 +5,7 @@ import { orderStatusLabel, orderBadgeClass } from '../anthology/orderStatus';
 import { anthologyStatusLabel, anthologyBadgeClass } from '../anthology/anthologyStatus';
 import '../anthology/anthology.css';
 import './HomePage.css';
+import Badge from '../../components/Badge';
 
 // Figma: SweetPress (fileKey: 7WJrsI7QOEOrXFP1x4LtAH) — 디자인 토큰/ant-* 공통 클래스 재사용
 export default function HomePage() {
@@ -55,7 +56,7 @@ export default function HomePage() {
           <Link key={a.id} to={`/anthology/${a.id}`} className="ant-anthology-card">
             <div className="ant-row-between">
               <div className="ant-anthology-card-title">{a.title || '제목 없음'}</div>
-              <span className={`ant-badge ${a.latestOrder?.status ? orderBadgeClass(a.latestOrder.status) : anthologyBadgeClass(a.status || 'DRAFT')}`}>{a.latestOrder?.status ? orderStatusLabel(a.latestOrder.status) : anthologyStatusLabel(a.status || 'DRAFT')}</span>
+              <Badge variant={a.latestOrder?.status ? orderBadgeClass(a.latestOrder.status) : anthologyBadgeClass(a.status || 'DRAFT')}>{a.latestOrder?.status ? orderStatusLabel(a.latestOrder.status) : anthologyStatusLabel(a.status || 'DRAFT')}</Badge>
             </div>
             <div className="ant-anthology-card-meta">
               {a.bookSpecUid || ''} · {filled}/{total || '?'}명 · {a.pageCount ?? 0}p

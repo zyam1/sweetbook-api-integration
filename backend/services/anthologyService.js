@@ -86,7 +86,7 @@ const anthologyService = {
             deadline: true,
             status: true,
             ownerId: true,
-            contributors: { select: { allocatedPages: true } },
+            contributors: { select: { _count: { select: { submissions: true } } } },
           },
         },
       },
@@ -98,7 +98,7 @@ const anthologyService = {
       return {
         ...anthologyRest,
         contributorCount: contributors.length,
-        pageCount: contributors.reduce((s, x) => s + (x.allocatedPages || 0), 0),
+        pageCount: contributors.reduce((s, x) => s + (x._count?.submissions || 0), 0),
         contributor: {
           id: c.id,
           handle: c.handle,

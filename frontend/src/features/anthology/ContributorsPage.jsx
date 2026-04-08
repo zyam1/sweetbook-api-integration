@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { listContributors, createContributor } from './api';
 import './anthology.css';
 import './ContributorsPage.css';
+import Badge from '../../components/Badge';
 
 // Figma: SweetPress / Anthology / Contributors (:id) (node 114:60)
 export default function ContributorsPage() {
@@ -107,9 +108,9 @@ export default function ContributorsPage() {
                     )}
                   </div>
                   <div className="ant-row" style={{ gap: 8 }}>
-                    <span className={`ant-badge ${used ? 'lavender' : 'yellow'}`}>
+                    <Badge variant={used ? 'lavender' : 'yellow'}>
                       {used ? '인증 완료' : '미사용'}
-                    </span>
+                    </Badge>
                     {token && (
                       <button
                         type="button"

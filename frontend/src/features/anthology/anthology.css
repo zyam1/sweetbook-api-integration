@@ -276,24 +276,6 @@
   transition: width 200ms ease;
 }
 
-/* Badge -------------------------------------------------- */
-.ant-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: var(--ant-radius-pill);
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--ant-ink);
-  background: var(--ant-subtle);
-  white-space: nowrap;
-  line-height: 1;
-}
-.ant-badge.lavender { background: var(--ant-lavender); color: var(--ant-ink); }
-.ant-badge.pink { background: var(--ant-pink); color: #fff; }
-.ant-badge.yellow { background: var(--ant-yellow); color: var(--ant-ink); }
-.ant-badge.subtle { background: var(--ant-subtle); color: var(--ant-ink); }
-
 /* Steps -------------------------------------------------- */
 .ant-steps {
   display: flex;
