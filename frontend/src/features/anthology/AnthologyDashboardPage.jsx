@@ -187,8 +187,8 @@ export default function AnthologyDashboardPage() {
           <div className="ant-card">
             <div className="ant-row-between">
               <h2>표지 설정</h2>
-              <span className={`ant-badge ${anthology.coverTemplateUid ? 'lavender' : 'pink'}`}>
-                {anthology.coverTemplateUid ? '설정됨' : '미설정'}
+              <span className={`ant-badge ${anthology.coverFrontPhoto ? 'lavender' : 'pink'}`}>
+                {anthology.coverFrontPhoto ? '설정됨' : '미설정'}
               </span>
             </div>
             <p className="ant-sub" style={{ marginTop: 10 }}>

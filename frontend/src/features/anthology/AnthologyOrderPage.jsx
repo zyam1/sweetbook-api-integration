@@ -16,8 +16,8 @@ export default function AnthologyOrderPage() {
 
   const [form, setForm] = useState({
     quantity: 1,
-    recipient: '',
-    phone: '',
+    recipientName: '',
+    recipientPhone: '',
     postalCode: '',
     address1: '',
     address2: '',
@@ -35,8 +35,8 @@ export default function AnthologyOrderPage() {
       await orderAnthology(id, {
         quantity: Number(form.quantity),
         shipping: {
-          recipient: form.recipient,
-          phone: form.phone,
+          recipientName: form.recipientName,
+          recipientPhone: form.recipientPhone,
           postalCode: form.postalCode,
           address1: form.address1,
           address2: form.address2,
@@ -128,8 +128,8 @@ export default function AnthologyOrderPage() {
               <label>수령인 이름</label>
               <input
                 className="ant-input"
-                value={form.recipient}
-                onChange={(e) => update('recipient', e.target.value)}
+                value={form.recipientName}
+                onChange={(e) => update('recipientName', e.target.value)}
                 required
               />
             </div>
@@ -137,8 +137,8 @@ export default function AnthologyOrderPage() {
               <label>연락처</label>
               <input
                 className="ant-input"
-                value={form.phone}
-                onChange={(e) => update('phone', e.target.value)}
+                value={form.recipientPhone}
+                onChange={(e) => update('recipientPhone', e.target.value)}
                 required
               />
             </div>

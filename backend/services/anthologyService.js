@@ -528,7 +528,7 @@ const anthologyService = {
       err.statusCode = 400;
       throw err;
     }
-    const bookUid = anthologyFlowService.getBookUid(anthologyId);
+    const bookUid = anthology.bookUid;
     if (!bookUid) {
       const err = new Error('BOOK_UID_NOT_CACHED');
       err.statusCode = 409;

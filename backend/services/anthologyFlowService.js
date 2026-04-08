@@ -7,6 +7,7 @@ const path = require('path');
 const bookService = require('./bookService');
 const orderService = require('./orderService');
 const client = require('./sweetbook');
+const db = require('./db');
 const {
   ANTHOLOGY_BOOK_SPEC_UID,
   ANTHOLOGY_CONTENT_TEMPLATE_UID,
@@ -19,9 +20,6 @@ function badReq(msg) {
   err.statusCode = 400;
   return err;
 }
-
-// anthologyId -> bookUid (in-memory). createOrder에서 사용.
-const bookUidCache = new Map();
 
 function guessContentType(fileName) {
   const ext = path.extname(fileName || '').toLowerCase();
@@ -190,12 +188,8 @@ async function runFinalize(anthology, contributors, allSubmissions) {
     },
   });
 
-  bookUidCache.set(anthology.id, bookUid);
+  await db.anthology.update({ where: { id: anthology.id }, data: { bookUid } });
   return { bookUid, estimate };
 }
 
-function getBookUid(anthologyId) {
-  return bookUidCache.get(anthologyId);
-}
-
-module.exports = { runFinalize, getBookUid };
+module.exports = { runFinalize };
