@@ -1,5 +1,12 @@
 /* ContributorUploadPage 전용 (공통은 anthology.css) */
 
+.ant-dropzone.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: #f5f3fa;
+}
+
 .ai-inspect-card {
   border: 1px solid #e0dbeb;
 }

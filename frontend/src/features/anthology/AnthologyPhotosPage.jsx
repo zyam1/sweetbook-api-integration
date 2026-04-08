@@ -6,6 +6,7 @@ import {
   deleteSubmission,
   reorderSubmissions,
 } from './api';
+import Modal from '../../components/ui/Modal';
 import './anthology.css';
 
 // 백엔드 storedPath → 공개 URL 변환
@@ -27,6 +28,7 @@ export default function AnthologyPhotosPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [dragIndex, setDragIndex] = useState(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
 
   const load = async () => {
     try {
@@ -63,13 +65,19 @@ export default function AnthologyPhotosPage() {
   };
 
   const handleDelete = async (sid) => {
-    if (!window.confirm('정말 이 사진을 삭제하시겠습니까?')) return;
     try {
       await deleteSubmission(id, sid);
       setItems((cur) => cur.filter((s) => s.id !== sid));
     } catch (e) {
       setError(e?.response?.data?.error || e.message);
     }
+  };
+
+  const handleConfirmDelete = async () => {
+    const sid = pendingDeleteId;
+    if (sid == null) return;
+    await handleDelete(sid);
+    setPendingDeleteId(null);
   };
 
   const statusLabel = (s) =>
@@ -157,7 +165,7 @@ export default function AnthologyPhotosPage() {
                       type="button"
                       className="ant-btn"
                       style={{ fontSize: 11, padding: '4px 8px' }}
-                      onClick={() => handleDelete(s.id)}
+                      onClick={() => setPendingDeleteId(s.id)}
                     >
                       삭제
                     </button>
@@ -168,6 +176,17 @@ export default function AnthologyPhotosPage() {
           </div>
         )}
       </div>
+
+      <Modal
+        open={pendingDeleteId !== null}
+        title="사진 삭제"
+        message="정말 이 사진을 삭제하시겠습니까?"
+        variant="danger"
+        confirmText="삭제"
+        cancelText="취소"
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={handleConfirmDelete}
+      />
     </div>
   );
 }

@@ -110,6 +110,7 @@ export default function ContributorUploadPage() {
   };
 
   const handleFiles = async (files) => {
+    if (myStatus === 'SUBMITTED') return;
     if (!files || !files.length) return;
     setUploading(true);
     setError(null);
@@ -231,22 +232,37 @@ export default function ContributorUploadPage() {
       )}
 
       <div
-        className="ant-dropzone"
-        onClick={() => inputRef.current?.click()}
+        className={`ant-dropzone${myStatus === 'SUBMITTED' ? ' disabled' : ''}`}
+        onClick={() => {
+          if (myStatus === 'SUBMITTED') return;
+          inputRef.current?.click();
+        }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();
+          if (myStatus === 'SUBMITTED') return;
           handleFiles(Array.from(e.dataTransfer.files));
         }}
       >
-        <div className="ico">📤</div>
-        <div className="title">{uploading ? '업로드 중...' : '이미지를 끌어다 놓거나 클릭해 업로드'}</div>
-        <div className="hint">JPG, PNG, HEIC 지원 · 최대 200MB · SVG 불가</div>
+        <div className="ico">{myStatus === 'SUBMITTED' ? '🔒' : '📤'}</div>
+        <div className="title">
+          {myStatus === 'SUBMITTED'
+            ? '제출 완료 — 추가 업로드 불가'
+            : uploading
+            ? '업로드 중...'
+            : '이미지를 끌어다 놓거나 클릭해 업로드'}
+        </div>
+        <div className="hint">
+          {myStatus === 'SUBMITTED'
+            ? '제출을 취소하면 다시 업로드할 수 있습니다'
+            : 'JPG, PNG, HEIC 지원 · 최대 200MB · SVG 불가'}
+        </div>
         <input
           ref={inputRef}
           type="file"
           multiple
           accept="image/*"
+          disabled={myStatus === 'SUBMITTED'}
           style={{ display: 'none' }}
           onChange={(e) => handleFiles(Array.from(e.target.files))}
         />

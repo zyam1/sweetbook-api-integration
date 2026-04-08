@@ -64,17 +64,7 @@ function LoginPage() {
           />
         </div>
 
-        <button type="button" className="auth-forgot">비밀번호를 잊으셨나요?</button>
-
         <button type="submit" className="auth-submit">로그인</button>
-
-        <div className="auth-divider">
-          <span className="auth-divider-line" />
-          <span className="auth-divider-text">또는</span>
-          <span className="auth-divider-line" />
-        </div>
-
-        <button type="button" className="auth-google">Google로 계속하기</button>
 
         <div className="auth-footer">
           <span className="auth-footer-text">아직 계정이 없나요?</span>

@@ -596,7 +596,9 @@ const anthologyService = {
     return updated;
   },
 
-  // contributor 제출 취소 (SUBMITTED → DRAFT)
+  // contributor 제출 취소 (SUBMITTED → PENDING)
+  // 제출 취소 시 해당 참여자가 업로드한 모든 submissions(파일 + DB 레코드)를 삭제하고
+  // 상태를 PENDING(파일 없음)으로 되돌린다. 이후 합본 전체 submission order를 재정렬한다.
   async unsubmitContribution(contributorId) {
     const contributor = await db.contributor.findUnique({ where: { id: contributorId } });
     if (!contributor) {
@@ -614,17 +616,58 @@ const anthologyService = {
       err.statusCode = 409;
       throw err;
     }
-    const updated = await db.contributor.update({
-      where: { id: contributorId },
-      data: { status: 'DRAFT', submittedAt: null },
-      select: {
-        id: true,
-        handle: true,
-        allocatedPages: true,
-        status: true,
-        submittedAt: true,
-      },
+
+    // 1. 삭제 대상 submissions 조회 (파일 경로 확보)
+    const submissions = await db.contributorSubmission.findMany({
+      where: { contributorId },
+      select: { id: true, storedPath: true },
     });
+
+    // 2. DB 레코드 삭제 + 상태 PENDING 전환 (트랜잭션)
+    const updated = await db.$transaction(async (tx) => {
+      if (submissions.length > 0) {
+        await tx.contributorSubmission.deleteMany({ where: { contributorId } });
+      }
+      return tx.contributor.update({
+        where: { id: contributorId },
+        data: { status: 'PENDING', submittedAt: null },
+        select: {
+          id: true,
+          handle: true,
+          allocatedPages: true,
+          status: true,
+          submittedAt: true,
+        },
+      });
+    });
+
+    // 3. 실제 파일 삭제 (실패는 경고만)
+    const fsp = require('fs/promises');
+    for (const s of submissions) {
+      try {
+        await fsp.unlink(s.storedPath);
+      } catch (e) {
+        console.warn('[anthology.unsubmitContribution] 파일 삭제 실패', e.message);
+      }
+    }
+
+    // 4. 합본 전체 submission order 재정렬 (0..N-1)
+    const remaining = await db.contributorSubmission.findMany({
+      where: { contributor: { anthologyId: contributor.anthologyId } },
+      orderBy: [{ order: 'asc' }, { id: 'asc' }],
+      select: { id: true },
+    });
+    if (remaining.length > 0) {
+      await db.$transaction(
+        remaining.map((s, idx) =>
+          db.contributorSubmission.update({
+            where: { id: s.id },
+            data: { order: idx },
+          })
+        )
+      );
+    }
+
     return updated;
   },
 
