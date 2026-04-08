@@ -41,7 +41,10 @@ const anthologyService = {
         deadline: true,
         status: true,
         createdAt: true,
-        contributors: { select: { _count: { select: { submissions: true } } } },
+        contributors: {
+          where: { status: 'SUBMITTED' },
+          select: { _count: { select: { submissions: true } } },
+        },
       },
       orderBy: [
         { deadline: 'asc' },
@@ -149,9 +152,10 @@ const anthologyService = {
       where: { id },
       include: {
         contributors: {
+          where: { status: 'SUBMITTED' },
           include: { _count: { select: { submissions: true } } },
         },
-        _count: { select: { contributors: true } },
+        _count: { select: { contributors: { where: { status: 'SUBMITTED' } } } },
       },
     });
     if (!result) return result;
@@ -320,7 +324,7 @@ const anthologyService = {
       throw err;
     }
     const rows = await db.contributorSubmission.findMany({
-      where: { contributor: { anthologyId } },
+      where: { contributor: { anthologyId, status: 'SUBMITTED' } },
       include: {
         contributor: { select: { id: true, handle: true, status: true } },
       },

@@ -25,8 +25,21 @@ export default function FinalizeModal({ anthology, onClose }) {
   };
 
   return (
-    <div className="ant-modal-backdrop" onClick={onClose}>
+    <div
+      className="ant-modal-backdrop"
+      onClick={submitting ? undefined : onClose}
+    >
       <div className="ant-modal" onClick={(e) => e.stopPropagation()}>
+        {submitting && (
+          <div className="ant-finalize-loading">
+            <div className="book-spinner" aria-label="마감 처리 중">
+              <div className="book-spinner-border" />
+              <div className="book-spinner-spine" />
+              <div className="book-spinner-page" />
+            </div>
+            <p className="ant-sub" style={{ marginTop: 12 }}>마감 처리 중입니다...</p>
+          </div>
+        )}
         <h2>합동지 마감</h2>
         <p className="ant-sub">지금 마감하면 더 이상 원고를 추가하거나 수정할 수 없어요.</p>
 

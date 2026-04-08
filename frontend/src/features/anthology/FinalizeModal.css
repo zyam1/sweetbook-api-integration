@@ -1,1 +1,57 @@
 /* FinalizeModal 전용 스타일 (공통은 anthology.css) */
+
+.ant-finalize-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0 8px;
+}
+
+/* Figma: Design System v0.2 / LoadingSpinner size=MD (node 17:34)
+ * 책 형상: 외곽 테두리(44x28) + 책등(1x28) + 분홍 페이지 폭 변화
+ * 4프레임: 22 → 11 → 4 → 11 (책장이 넘어가는 모습) */
+.book-spinner {
+  position: relative;
+  width: 48px;
+  height: 32px;
+}
+
+.book-spinner-border {
+  position: absolute;
+  left: 2px;
+  top: 2px;
+  width: 44px;
+  height: 28px;
+  border: 2px solid #1a1a1a;
+  border-radius: 2px;
+  box-sizing: border-box;
+}
+
+.book-spinner-spine {
+  position: absolute;
+  left: 50%;
+  top: 2px;
+  width: 1px;
+  height: 28px;
+  background: #1a1a1a;
+  transform: translateX(-0.5px);
+}
+
+.book-spinner-page {
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  height: 26px;
+  background: #ff4d8d;
+  transform-origin: left center;
+  animation: book-spinner-flip 1s steps(1) infinite;
+}
+
+@keyframes book-spinner-flip {
+  0%   { width: 22px; transform: translateX(-22px); }
+  25%  { width: 11px; transform: translateX(-11px); }
+  50%  { width: 4px;  transform: translateX(-4px); }
+  75%  { width: 11px; transform: translateX(0); }
+  100% { width: 22px; transform: translateX(0); }
+}

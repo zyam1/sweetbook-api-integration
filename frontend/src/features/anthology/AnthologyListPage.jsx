@@ -61,8 +61,12 @@ export default function AnthologyListPage() {
 
       <div className="ant-grid">
         {items.map((a) => {
+          const to =
+            a.status === 'FINALIZED' && !a.latestOrder
+              ? `/anthology/${a.id}/order`
+              : `/anthology/${a.id}`;
           return (
-            <Link key={a.id} to={`/anthology/${a.id}`} className="ant-anthology-card">
+            <Link key={a.id} to={to} className="ant-anthology-card">
               {a.coverFrontPhoto ? (
                 <img
                   className="ant-anthology-card-thumb"

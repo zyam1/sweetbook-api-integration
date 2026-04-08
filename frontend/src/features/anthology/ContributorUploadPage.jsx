@@ -13,6 +13,19 @@ import './anthology.css';
 import './ContributorUploadPage.css';
 import Badge from '../../components/Badge';
 
+// 백엔드 storedPath → 공개 URL 변환 (AnthologyPhotosPage와 동일 규칙)
+function toPublicUrl(storedPath) {
+  if (!storedPath) return '';
+  if (/^https?:\/\//.test(storedPath)) return storedPath;
+  const idx = storedPath.indexOf('uploads/');
+  if (idx >= 0) {
+    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000';
+    const rel = storedPath.substring(idx).split('/').map(encodeURIComponent).join('/');
+    return `${base}/${rel}`;
+  }
+  return storedPath;
+}
+
 // Figma: SweetPress / Submit / Upload (:token) (node 115:60)
 export default function ContributorUploadPage() {
   const { token } = useParams();
@@ -232,15 +245,15 @@ export default function ContributorUploadPage() {
       )}
 
       <div
-        className={`ant-dropzone${myStatus === 'SUBMITTED' ? ' disabled' : ''}`}
+        className={`ant-dropzone${myStatus === 'SUBMITTED' || uploading ? ' disabled' : ''}`}
         onClick={() => {
-          if (myStatus === 'SUBMITTED') return;
+          if (myStatus === 'SUBMITTED' || uploading) return;
           inputRef.current?.click();
         }}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => {
           e.preventDefault();
-          if (myStatus === 'SUBMITTED') return;
+          if (myStatus === 'SUBMITTED' || uploading) return;
           handleFiles(Array.from(e.dataTransfer.files));
         }}
       >
@@ -262,7 +275,7 @@ export default function ContributorUploadPage() {
           type="file"
           multiple
           accept="image/*"
-          disabled={myStatus === 'SUBMITTED'}
+          disabled={myStatus === 'SUBMITTED' || uploading}
           style={{ display: 'none' }}
           onChange={(e) => handleFiles(Array.from(e.target.files))}
         />
@@ -279,11 +292,14 @@ export default function ContributorUploadPage() {
             {submissions.map((s) => (
               <li key={s.id}>
                 <div className="ant-row" style={{ gap: 14 }}>
-                  <div
+                  <img
+                    src={toPublicUrl(s.storedPath)}
+                    alt={s.fileName || s.originalName || ''}
                     style={{
                       width: 48,
                       height: 48,
                       borderRadius: 6,
+                      objectFit: 'cover',
                       background: 'var(--ant-purple-thumb)',
                       flexShrink: 0,
                     }}
