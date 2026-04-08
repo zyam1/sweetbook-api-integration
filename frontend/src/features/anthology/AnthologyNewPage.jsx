@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import client from "../../api/client";
 import { createAnthology, createContributor } from "./api";
 import "./anthology.css";
 import "./AnthologyNewPage.css";
 
 // Figma: SweetPress / Anthology / New (Wizard) (node 111:60)
-const STEPS = ["기본 정보", "판형 선택", "표지 템플릿", "내지 템플릿", "참여자 모집"];
+const STEPS = ["기본 정보", "참여자 모집"];
 
 export default function AnthologyNewPage() {
   const navigate = useNavigate();
@@ -17,70 +16,15 @@ export default function AnthologyNewPage() {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    deadline: "",
     password: "",
-    bookSpecUid: "",
-    coverTemplateUid: "",
-    contentTemplateUid: "",
   });
   const [contributors, setContributors] = useState([{ name: "", email: "" }]);
-
-  const [specs, setSpecs] = useState([]);
-  const [contentTemplates, setContentTemplates] = useState([]);
-  const [coverTemplates, setCoverTemplates] = useState([]);
-
-  useEffect(() => {
-    client
-      .get("/book-specs")
-      .then((res) => {
-        const inner = res.data?.data;
-        setSpecs(
-          Array.isArray(inner) ? inner : inner?.data || inner?.items || [],
-        );
-      })
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
-    if (!form.bookSpecUid) return;
-    client
-      .get("/templates", {
-        params: { bookSpecUid: form.bookSpecUid, templateKind: "content" },
-      })
-      .then((res) => {
-        const inner = res.data?.data?.data ?? res.data?.data;
-        setContentTemplates(
-          Array.isArray(inner)
-            ? inner
-            : inner?.templates || inner?.data || inner?.items || [],
-        );
-      })
-      .catch(() => {});
-  }, [form.bookSpecUid]);
-
-  useEffect(() => {
-    if (!form.bookSpecUid) return;
-    client
-      .get("/templates", {
-        params: { bookSpecUid: form.bookSpecUid, templateKind: "cover" },
-      })
-      .then((res) => {
-        const inner = res.data?.data?.data ?? res.data?.data;
-        setCoverTemplates(
-          Array.isArray(inner)
-            ? inner
-            : inner?.templates || inner?.data || inner?.items || [],
-        );
-      })
-      .catch(() => {});
-  }, [form.bookSpecUid]);
 
   const update = (k, v) => setForm((s) => ({ ...s, [k]: v }));
 
   const canNext = () => {
     if (step === 0) return form.title.trim().length > 0 && form.password.trim().length > 0;
-    if (step === 1) return !!form.bookSpecUid;
-    if (step === 2) return !!form.coverTemplateUid;
-    if (step === 3) return !!form.contentTemplateUid;
     return true;
   };
 
@@ -91,13 +35,10 @@ export default function AnthologyNewPage() {
       const created = await createAnthology({
         title: form.title,
         description: form.description,
+        deadline: form.deadline || null,
         password: form.password,
-        bookSpecUid: form.bookSpecUid,
-        coverTemplateUid: form.coverTemplateUid,
-        contentTemplateUid: form.contentTemplateUid,
       });
       const anthologyId = created?.id || created?.anthologyId;
-      // 참여자 추가 (비어있지 않은 것만)
       for (const c of contributors) {
         if (c.name.trim()) {
           await createContributor(anthologyId, {
@@ -162,6 +103,15 @@ export default function AnthologyNewPage() {
               />
             </div>
             <div className="ant-field">
+              <label>마감일</label>
+              <input
+                className="ant-input"
+                type="date"
+                value={form.deadline}
+                onChange={(e) => update("deadline", e.target.value)}
+              />
+            </div>
+            <div className="ant-field">
               <label>참여 비밀번호</label>
               <input
                 className="ant-input"
@@ -179,65 +129,6 @@ export default function AnthologyNewPage() {
         )}
 
         {step === 1 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <p className="ant-sub">판형을 선택하세요.</p>
-            <div className="ant-grid">
-              {specs.map((s) => (
-                <div
-                  key={s.bookSpecUid}
-                  className={`ant-spec-card ${form.bookSpecUid === s.bookSpecUid ? "selected" : ""}`}
-                  onClick={() => update("bookSpecUid", s.bookSpecUid)}
-                >
-                  <strong>{s.name}</strong>
-                  <div className="meta">
-                    {s.innerTrimWidthMm}×{s.innerTrimHeightMm}mm
-                  </div>
-                  <div className="meta">
-                    {s.coverType} · {s.pageMin}~{s.pageMax}p
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <p className="ant-sub">표지 템플릿을 선택하세요.</p>
-            <div className="ant-grid">
-              {coverTemplates.map((t) => (
-                <div
-                  key={t.templateUid}
-                  className={`ant-spec-card ${form.coverTemplateUid === t.templateUid ? "selected" : ""}`}
-                  onClick={() => update("coverTemplateUid", t.templateUid)}
-                >
-                  <strong>{t.templateName || t.name || t.templateUid}</strong>
-                  <div className="meta">{t.category || ""}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step === 3 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <p className="ant-sub">내지 템플릿을 선택하세요.</p>
-            <div className="ant-grid">
-              {contentTemplates.map((t) => (
-                <div
-                  key={t.templateUid}
-                  className={`ant-spec-card ${form.contentTemplateUid === t.templateUid ? "selected" : ""}`}
-                  onClick={() => update("contentTemplateUid", t.templateUid)}
-                >
-                  <strong>{t.templateName || t.name || t.templateUid}</strong>
-                  <div className="meta">{t.category || ""}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {step === 4 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             <p className="ant-sub">참여자를 추가하세요. (나중에 추가 가능)</p>
             {contributors.map((c, idx) => (

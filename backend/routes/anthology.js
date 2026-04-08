@@ -134,6 +134,7 @@ router.post(
         mimeType: req.file.mimetype,
         sizeBytes: req.file.size,
         dpi: req.body?.dpi ? Number(req.body.dpi) : null,
+        bindingKey: req.body?.bindingKey || null,
       });
       res.json(data);
     } catch (err) {

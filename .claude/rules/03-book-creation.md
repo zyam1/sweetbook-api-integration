@@ -124,26 +124,118 @@ status
 
 ---
 
-## 6. 최종화
+## 6. 최종화 (Finalization)
 
-POST /books/{bookUid}/finalization
+### 엔드포인트
 
-설명:
+POST /v1/books/{bookUid}/finalization
 
-- 책 편집 완료 처리
-- 이후 주문 가능 상태로 변경
+- 권한: `book:write`
+- 요청 본문 없음 (경로 파라미터만 사용)
+- Authorization: `Bearer YOUR_API_KEY`
 
-조건:
+### 요청 예시
 
-- 최소 페이지 수 충족 필수
+```bash
+curl -X POST 'https://api-sandbox.sweetbook.com/v1/books/bk_a1b2c3d4e5f6/finalization' \
+  -H 'Authorization: Bearer YOUR_API_KEY'
+```
+
+### 응답 예시 (신규 최종화)
+
+```json
+{
+  "success": true,
+  "data": {
+    "result": "created",
+    "pageCount": 24,
+    "finalizedAt": "2025-01-05T15:00:00Z"
+  },
+  "message": "책 최종화 완료"
+}
+```
+
+### 응답 예시 (이미 최종화됨 — 멱등)
+
+```json
+{
+  "success": true,
+  "data": {
+    "result": "updated",
+    "pageCount": 24,
+    "finalizedAt": "2025-01-05T15:00:00Z"
+  },
+  "message": "이미 최종화된 책입니다"
+}
+```
+
+### 전제 조건
+
+1. **DRAFT 상태만 허용**
+   - DRAFT 상태인 책만 최종화 가능
+   - 이미 FINALIZED인 경우 멱등 처리로 200 OK 반환 (에러 아님)
+
+2. **표지 + 내지 존재 필수**
+   - 표지(`POST /books/{id}/cover`)와 내지(`POST /books/{id}/contents`)가 모두 추가되어 있어야 함
+
+3. **페이지 수 검증** — 실제 pageCount가 판형(BookSpec) 규칙을 만족해야 함
+
+### 페이지 수 검증 규칙
+
+| 규칙 | 조건 | 에러 메시지 |
+|------|------|------------|
+| 최소 페이지 | `actualPageCount >= pageMin` | 최소 페이지 미달: 현재 Xp, 최소 Yp |
+| 최대 페이지 | `actualPageCount <= pageMax` | 페이지 초과: 현재 Xp, 최대 Yp |
+| 증분 규칙 | `(actualPageCount - pageMin) % pageIncrement === 0` | 페이지 수가 증분 규칙에 맞지 않음 |
+
+### 검증 예시 (pageMin=20, pageMax=120, pageIncrement=2)
+
+| 페이지 | 판정 | 사유 |
+|:------:|:----:|------|
+| 20p | 통과 | 최소값 |
+| 22p | 통과 | 증분 규칙 만족 |
+| 21p | 실패 | 증분 규칙 위반 (홀수) |
+| 18p | 실패 | 최소 미달 |
+| 122p | 실패 | 최대 초과 |
+
+### 최종화 이후
+
+- 책 상태: `DRAFT → FINALIZED`
+- 더 이상 표지/내지 추가, 사진 업로드 불가
+- 주문 생성(`POST /orders`) 가능
+- **멱등 처리**: 이미 FINALIZED된 책에 재요청 시 200 OK 반환 (에러 아님)
+
+### 사전 검증 권장 패턴 (400 예방)
+
+finalize 호출 전 다음 순서로 검증:
+
+```js
+// 1. 책 현재 상태 + pageCount 조회
+const book = await client.books.get(bookUid);
+
+// 2. bookSpec 조회
+const spec = await client.books._get(`/book-specs/${book.bookSpecUid}`);
+
+// 3. 검증
+const pc = book.pageCount;
+if (pc < spec.pageMin) throw new Error(`INSUFFICIENT_PAGES: ${pc}/${spec.pageMin}`);
+if (pc > spec.pageMax) throw new Error(`TOO_MANY_PAGES: ${pc}/${spec.pageMax}`);
+if ((pc - spec.pageMin) % spec.pageIncrement !== 0) {
+  throw new Error(`PAGE_INCREMENT_VIOLATION: ${pc}`);
+}
+
+// 4. 통과 시 finalize
+await client.books.finalize(bookUid);
+```
 
 ---
 
 ## 상태 흐름
 
-CREATED → EDITING → FINALIZED
+DRAFT → FINALIZED
 
-- FINALIZED 상태에서만 주문 가능
+- DRAFT: 편집 가능 (표지/내지/사진 추가)
+- FINALIZED: 편집 불가, 주문 가능
 
 ---
 

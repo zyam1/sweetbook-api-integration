@@ -81,6 +81,8 @@ model Anthology {
   coverTemplateUid String?
   coverFrontPhoto  String?
   coverBackPhoto   String?
+  coverParameters    Json?
+  contentParameters  Json?
   invitePasswordHash String?
   deadline         DateTime?
   status           String    @default("RECRUITING")
@@ -103,6 +105,7 @@ model Contributor {
   inviteToken    String    @unique
   deadline       DateTime?
   tokenUsedAt    DateTime?
+  submissionParameters Json?
   anthology      Anthology @relation(fields: [anthologyId], references: [id])
   user           User?     @relation(fields: [userId], references: [id])
   submissions    ContributorSubmission[]
@@ -119,6 +122,7 @@ model ContributorSubmission {
   mimeType      String?
   sizeBytes     Int?
   dpi           Int?
+  bindingKey    String?
   createdAt     DateTime    @default(now())
   contributor   Contributor @relation(fields: [contributorId], references: [id])
 }

@@ -31,11 +31,7 @@ export default function CoverSettingsModal({ anthology, onClose, onSaved }) {
     setSaving(true);
     setError(null);
     try {
-      await updateCover(anthology.id, {
-        templateUid: anthology?.coverTemplateUid,
-        frontPhoto,
-        backPhoto,
-      });
+      await updateCover(anthology.id, { frontPhoto, backPhoto });
       onSaved?.();
       onClose();
     } catch (e) {
@@ -51,13 +47,8 @@ export default function CoverSettingsModal({ anthology, onClose, onSaved }) {
       <div className="ant-modal" onClick={(e) => e.stopPropagation()}>
         <h2>표지 설정</h2>
         <p className="ant-sub">
-          앞/뒤 표지 이미지를 업로드하세요. 템플릿은 생성 시 선택한 것이 사용됩니다.
+          앞/뒤 표지 이미지를 업로드하세요.
         </p>
-        {!anthology?.coverTemplateUid && (
-          <p className="ant-warn">
-            ⚠ 이 합동지는 표지 템플릿이 설정되지 않았습니다. 새 합동지를 생성하거나 관리자에게 문의하세요.
-          </p>
-        )}
 
         <div className="ant-card-soft">
           <p className="ant-sub-sm" style={{ fontWeight: 600 }}>앞/뒤 표지 이미지</p>

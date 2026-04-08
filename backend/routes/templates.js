@@ -6,6 +6,11 @@ const router = Router();
 
 router.get('/', async (req, res, next) => {
   try {
+    const { photoOnly, templateKind, bookSpecUid } = req.query;
+    if (photoOnly === '1' && templateKind === 'content' && bookSpecUid) {
+      const items = await templateService.listContentPhotoCapable(bookSpecUid);
+      return res.json({ success: true, data: items });
+    }
     const data = await templateService.list(req.query);
     res.json({ success: true, data });
   } catch (err) {

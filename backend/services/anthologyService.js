@@ -9,6 +9,11 @@ const jwt = require('jsonwebtoken');
 const db = require('./db');
 const orderService = require('./orderService');
 const anthologyFlowService = require('./anthologyFlowService');
+const {
+  ANTHOLOGY_BOOK_SPEC_UID,
+  ANTHOLOGY_CONTENT_TEMPLATE_UID,
+  ANTHOLOGY_COVER_TEMPLATE_UID,
+} = require('./anthologyConstants');
 
 const anthologyService = {
   // 내가 소유(주최)한 합본 목록 (마감일 빠른 순)
@@ -70,7 +75,7 @@ const anthologyService = {
   },
 
   // 합본 생성
-  async create(ownerId, { title, description, bookSpecUid, deadline, password, contentTemplateUid, coverTemplateUid }) {
+  async create(ownerId, { title, description, deadline, password }) {
     if (!password || !String(password).trim()) {
       const err = new Error('PASSWORD_REQUIRED');
       err.statusCode = 400;
@@ -78,18 +83,18 @@ const anthologyService = {
     }
     const invitePasswordHash = await bcrypt.hash(password, 10);
 
-    return db.anthology.create({
-      data: {
-        ownerId,
-        title,
-        description: description ?? null,
-        bookSpecUid,
-        deadline: deadline ? new Date(deadline) : null,
-        invitePasswordHash,
-        contentTemplateUid: contentTemplateUid ?? null,
-        coverTemplateUid: coverTemplateUid ?? null,
-      },
-    });
+    const data = {
+      ownerId,
+      title,
+      description: description ?? null,
+      bookSpecUid: ANTHOLOGY_BOOK_SPEC_UID,
+      deadline: deadline ? new Date(deadline) : null,
+      invitePasswordHash,
+      contentTemplateUid: ANTHOLOGY_CONTENT_TEMPLATE_UID,
+      coverTemplateUid: ANTHOLOGY_COVER_TEMPLATE_UID,
+    };
+
+    return db.anthology.create({ data });
   },
 
   // 합본 상세
@@ -103,12 +108,18 @@ const anthologyService = {
         _count: { select: { contributors: true } },
       },
     });
-    if (result) delete result.invitePasswordHash;
+    if (!result) return result;
+    delete result.invitePasswordHash;
+    result.contributorCount = result._count?.contributors ?? 0;
+    result.pageCount = (result.contributors || []).reduce(
+      (sum, c) => sum + (c._count?.submissions || 0),
+      0
+    );
     return result;
   },
 
   // 표지 정보 업데이트 (주최자 전용)
-  async updateCover(id, ownerId, { templateUid, frontPhoto, backPhoto }) {
+  async updateCover(id, ownerId, { frontPhoto, backPhoto }) {
     const anthology = await db.anthology.findUnique({ where: { id } });
     if (!anthology) {
       const err = new Error('ANTHOLOGY_NOT_FOUND');
@@ -120,13 +131,12 @@ const anthologyService = {
       err.statusCode = 403;
       throw err;
     }
+    const data = {};
+    if (frontPhoto) data.coverFrontPhoto = frontPhoto;
+    if (backPhoto) data.coverBackPhoto = backPhoto;
     return db.anthology.update({
       where: { id },
-      data: {
-        coverTemplateUid: templateUid,
-        coverFrontPhoto: frontPhoto,
-        coverBackPhoto: backPhoto ?? null,
-      },
+      data,
     });
   },
 
@@ -269,6 +279,21 @@ const anthologyService = {
       err.statusCode = 404;
       throw err;
     }
+
+    const bookSpec = { pageMin: 24, pageMax: 130, pageIncrement: 2 };
+
+    const minPhotos = contributor.allocatedPages && contributor.allocatedPages > 0
+      ? contributor.allocatedPages
+      : 24;
+
+    const requirements = {
+      handle: { ok: !!(contributor.handle && String(contributor.handle).trim()) },
+      photoCount: {
+        current: contributor._count.submissions,
+        min: minPhotos,
+      },
+    };
+
     return {
       contributor: {
         id: contributor.id,
@@ -279,6 +304,8 @@ const anthologyService = {
       },
       anthology: contributor.anthology,
       submissionCount: contributor._count.submissions,
+      bookSpec,
+      requirements,
     };
   },
 
@@ -333,7 +360,7 @@ const anthologyService = {
   },
 
   // contributor 제출물 추가
-  async addSubmission(contributorId, { fileName, storedPath, mimeType, sizeBytes, dpi }) {
+  async addSubmission(contributorId, { fileName, storedPath, mimeType, sizeBytes, dpi, bindingKey }) {
     const contributor = await db.contributor.findUnique({ where: { id: contributorId } });
     if (!contributor) {
       const err = new Error('CONTRIBUTOR_NOT_FOUND');
@@ -353,6 +380,7 @@ const anthologyService = {
         mimeType: mimeType ?? null,
         sizeBytes: sizeBytes ?? null,
         dpi: dpi ?? null,
+        bindingKey: bindingKey ?? null,
       },
     });
     if (contributor.status === 'PENDING') {
@@ -368,7 +396,9 @@ const anthologyService = {
   async submitContribution(contributorId) {
     const contributor = await db.contributor.findUnique({
       where: { id: contributorId },
-      include: { _count: { select: { submissions: true } } },
+      include: {
+        _count: { select: { submissions: true } },
+      },
     });
     if (!contributor) {
       const err = new Error('CONTRIBUTOR_NOT_FOUND');
@@ -382,6 +412,11 @@ const anthologyService = {
     }
     if (contributor._count.submissions === 0) {
       const err = new Error('업로드된 파일이 없습니다');
+      err.statusCode = 400;
+      throw err;
+    }
+    if (!contributor.handle || !String(contributor.handle).trim()) {
+      const err = new Error('HANDLE_REQUIRED');
       err.statusCode = 400;
       throw err;
     }

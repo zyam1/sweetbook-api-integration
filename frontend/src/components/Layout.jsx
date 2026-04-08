@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { getStoredUser, clearAuth } from '../features/auth/storage';
 import Container from './ui/Container';
-import '../features/main/MainPage.css';
+import './Layout.css';
 
 export default function Layout() {
   const navigate = useNavigate();

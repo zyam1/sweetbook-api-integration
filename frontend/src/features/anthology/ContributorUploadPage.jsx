@@ -6,6 +6,7 @@ import {
   getContributorToken,
   getContribDashboard,
   updateMyHandle,
+  updateMyParameters,
   aiInspect,
   submitContribution,
   unsubmitContribution,
@@ -31,6 +32,18 @@ export default function ContributorUploadPage() {
   const [inspectCount, setInspectCount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
+  const [parameters, setParameters] = useState({});
+  const [paramSaving, setParamSaving] = useState(false);
+  const [paramMsg, setParamMsg] = useState(null);
+
+  const definitions = dashboard?.contentTemplate?.definitions || {};
+  const textBindings = Object.entries(definitions)
+    .filter(([, v]) => v?.binding === 'text')
+    .map(([key, v]) => ({ key, required: !!v.required, description: v.description || v.label || key }));
+  const fileBindings = Object.entries(definitions)
+    .filter(([, v]) => v?.binding === 'file')
+    .map(([key, v]) => ({ key, required: !!v.required, description: v.description || v.label || key }));
+  const isGalleryMode = fileBindings.length === 1;
 
   // 참여자 상태: PENDING(파일 없음) / DRAFT(파일 있음) / SUBMITTED(제출 완료)
   const myStatus =
@@ -43,6 +56,7 @@ export default function ContributorUploadPage() {
     try {
       const d = await getContribDashboard();
       setDashboard(d);
+      setParameters(d?.submissionParameters || {});
     } catch (_) {}
     load();
   };
@@ -104,6 +118,7 @@ export default function ContributorUploadPage() {
         setDashboard(d);
         const h = d?.handle || d?.me?.handle || d?.contributor?.handle || '';
         setHandleInput(h);
+        setParameters(d?.submissionParameters || {});
       })
       .catch(() => {});
     // eslint-disable-next-line
@@ -131,7 +146,7 @@ export default function ContributorUploadPage() {
     setError(null);
     try {
       for (const file of files) {
-        await uploadContributionFile(file);
+        await uploadContributionFile(file, isGalleryMode ? { bindingKey: fileBindings[0].key } : {});
       }
       reloadAll();
     } catch (e) {
@@ -220,27 +235,201 @@ export default function ContributorUploadPage() {
         </div>
       )}
 
-      <div
-        className="ant-dropzone"
-        onClick={() => inputRef.current?.click()}
-        onDragOver={(e) => e.preventDefault()}
-        onDrop={(e) => {
-          e.preventDefault();
-          handleFiles(Array.from(e.dataTransfer.files));
-        }}
-      >
-        <div className="ico">📤</div>
-        <div className="title">{uploading ? '업로드 중...' : '이미지를 끌어다 놓거나 클릭해 업로드'}</div>
-        <div className="hint">JPG, PNG, HEIC 지원 · 최대 200MB · SVG 불가</div>
-        <input
-          ref={inputRef}
-          type="file"
-          multiple
-          accept="image/*"
-          style={{ display: 'none' }}
-          onChange={(e) => handleFiles(Array.from(e.target.files))}
-        />
-      </div>
+      {dashboard?.requirements && (
+        <div className="ant-card">
+          <h2>필수 체크리스트</h2>
+          {(() => {
+            const req = dashboard.requirements;
+            const photo = req.photoCount || {};
+            const showPhoto = photo.mode && photo.mode !== 'none';
+            const photoInsufficient =
+              showPhoto && photo.min != null && (photo.current ?? 0) < photo.min;
+            return (
+              <>
+                {showPhoto && (
+                  <p className="ant-sub" style={{ marginTop: 8 }}>
+                    {photo.min == null ? (
+                      <>최소 장수 정보 없음 · 현재 {photo.current ?? 0}장</>
+                    ) : (
+                      <>
+                        {photoInsufficient ? '⚠️ ' : '✅ '}
+                        사진 {photo.current ?? 0}장 / 최소 {photo.min}장
+                        {photoInsufficient && ' (부족)'}
+                      </>
+                    )}
+                  </p>
+                )}
+                <ul className="ant-list" style={{ marginTop: 8 }}>
+                  <li>
+                    <span>
+                      {req.handle?.ok ? '✅' : '⚠️'} 이름 입력{' '}
+                      <span style={{ color: 'var(--ant-danger, #c33)' }}>*</span>
+                    </span>
+                  </li>
+                  {(req.textParams || []).map((t) => {
+                    const warn = t.required && !t.ok;
+                    return (
+                      <li key={`t-${t.key}`}>
+                        <span>
+                          {warn ? '⚠️' : '✅'} {t.description || t.key}{' '}
+                          {t.required ? (
+                            <span style={{ color: 'var(--ant-danger, #c33)' }}>*</span>
+                          ) : (
+                            <span className="ant-sub-sm" style={{ color: '#888' }}>(선택)</span>
+                          )}
+                        </span>
+                      </li>
+                    );
+                  })}
+                  {(req.fileBindings || []).map((f) => {
+                    const warn = f.required && !f.ok;
+                    return (
+                      <li key={`f-${f.key}`}>
+                        <span>
+                          {warn ? '⚠️' : '✅'} {f.description || f.key}{' '}
+                          {f.required ? (
+                            <span style={{ color: 'var(--ant-danger, #c33)' }}>*</span>
+                          ) : (
+                            <span className="ant-sub-sm" style={{ color: '#888' }}>(선택)</span>
+                          )}
+                          {typeof f.uploadedCount === 'number' && (
+                            <span className="ant-sub-sm" style={{ marginLeft: 6 }}>
+                              ({f.uploadedCount}개 업로드됨)
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {dashboard.bookSpec && (
+                  <p className="ant-sub-sm" style={{ marginTop: 10 }}>
+                    판형: {dashboard.bookSpec.pageMin}~{dashboard.bookSpec.pageMax}p (증분{' '}
+                    {dashboard.bookSpec.pageIncrement})
+                  </p>
+                )}
+              </>
+            );
+          })()}
+        </div>
+      )}
+
+      {textBindings.length > 0 && (
+        <div className="ant-card">
+          <h2>제출 정보 입력</h2>
+          <p className="ant-sub" style={{ marginTop: 6 }}>
+            합동지에 사용될 텍스트 정보를 입력하세요.
+          </p>
+          {textBindings.map(({ key, required, description }) => (
+            <div className="ant-field" key={key} style={{ marginTop: 12 }}>
+              <label>
+                {description}{' '}
+                {required && <span style={{ color: 'var(--ant-danger, #c33)' }}>*</span>}
+              </label>
+              <input
+                className="ant-input"
+                value={parameters[key] || ''}
+                onChange={(e) => setParameters((s) => ({ ...s, [key]: e.target.value }))}
+                placeholder={key}
+              />
+            </div>
+          ))}
+          <div className="ant-row" style={{ marginTop: 12, gap: 8, alignItems: 'center' }}>
+            <button
+              type="button"
+              className="ant-btn ant-btn-primary"
+              disabled={paramSaving}
+              onClick={async () => {
+                setParamSaving(true);
+                setParamMsg(null);
+                try {
+                  await updateMyParameters(parameters);
+                  setParamMsg('저장되었습니다');
+                  await reloadAll();
+                } catch (e) {
+                  setParamMsg(e?.response?.data?.error || e.message);
+                } finally {
+                  setParamSaving(false);
+                }
+              }}
+            >
+              {paramSaving ? '저장 중...' : '입력 정보 저장'}
+            </button>
+            {paramMsg && <span className="ant-sub-sm">{paramMsg}</span>}
+          </div>
+        </div>
+      )}
+
+      {!isGalleryMode && fileBindings.length > 1 && (
+        <div className="ant-card">
+          <h2>이미지 업로드</h2>
+          <p className="ant-sub" style={{ marginTop: 6 }}>
+            각 슬롯에 해당하는 이미지를 업로드하세요.
+          </p>
+          {fileBindings.map(({ key, required, description }) => {
+            const existing = submissions.find((s) => s.bindingKey === key);
+            return (
+              <div className="ant-field" key={key} style={{ marginTop: 12 }}>
+                <label>
+                  {description}{' '}
+                  {required && <span style={{ color: 'var(--ant-danger, #c33)' }}>*</span>}
+                </label>
+                <div className="ant-row" style={{ gap: 8, alignItems: 'center', marginTop: 6 }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploading}
+                    onChange={async (e) => {
+                      const f = e.target.files?.[0];
+                      if (!f) return;
+                      setUploading(true);
+                      setError(null);
+                      try {
+                        await uploadContributionFile(f, { bindingKey: key });
+                        await reloadAll();
+                      } catch (err) {
+                        setError(err?.response?.data?.error || err.message);
+                      } finally {
+                        setUploading(false);
+                        e.target.value = '';
+                      }
+                    }}
+                  />
+                  {existing && (
+                    <span className="ant-sub-sm" style={{ color: 'var(--ant-ink)' }}>
+                      ✅ {existing.fileName}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {(isGalleryMode || fileBindings.length === 0) && (
+        <div
+          className="ant-dropzone"
+          onClick={() => inputRef.current?.click()}
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            handleFiles(Array.from(e.dataTransfer.files));
+          }}
+        >
+          <div className="ico">📤</div>
+          <div className="title">{uploading ? '업로드 중...' : '이미지를 끌어다 놓거나 클릭해 업로드'}</div>
+          <div className="hint">JPG, PNG, HEIC 지원 · 최대 200MB · SVG 불가</div>
+          <input
+            ref={inputRef}
+            type="file"
+            multiple
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={(e) => handleFiles(Array.from(e.target.files))}
+          />
+        </div>
+      )}
 
       {error && <p className="ant-error">{error}</p>}
 
@@ -326,7 +515,10 @@ export default function ContributorUploadPage() {
                     )}
                   </div>
                 </div>
-                <span className="ant-badge lavender">{s.status || '통과'}</span>
+                <span className="ant-badge lavender">
+                  {s.status || '통과'}
+                  {s.bindingKey && <span className="ant-badge lavender" style={{ marginLeft: 6 }}>{s.bindingKey}</span>}
+                </span>
               </li>
             ))}
           </ul>

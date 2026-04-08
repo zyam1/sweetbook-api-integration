@@ -2,11 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
-const booksRouter = require('./routes/books');
-const bookSpecsRouter = require('./routes/bookSpecs');
 const templatesRouter = require('./routes/templates');
-const ordersRouter = require('./routes/orders');
-const creditsRouter = require('./routes/credits');
 const authRouter = require('./routes/auth');
 const projectsRouter = require('./routes/projects');
 const anthologyRouter = require('./routes/anthology');
@@ -19,11 +15,7 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
-app.use('/api/books', booksRouter);
-app.use('/api/book-specs', bookSpecsRouter);
 app.use('/api/templates', templatesRouter);
-app.use('/api/orders', ordersRouter);
-app.use('/api/credits', creditsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/projects', projectsRouter);
 app.use('/api/anthology', anthologyRouter);

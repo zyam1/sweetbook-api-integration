@@ -7,7 +7,7 @@ const bookService = {
   },
 
   get(bookUid) {
-    return client.books.get(bookUid);
+    return client.books._get(`/books/${bookUid}`);
   },
 
   async create(data) {
@@ -28,7 +28,34 @@ const bookService = {
   },
 
   async finalize(bookUid) {
-    const result = await client.books.finalize(bookUid);
+    // SDK 우회: SweetbookApiError가 response body를 lock된 ReadableStream으로만 반환해
+    // 실제 사유가 손실되는 문제를 회피하기 위해 fetch로 직접 호출.
+    const baseUrl = process.env.SWEETBOOK_API_BASE_URL;
+    const apiKey = process.env.SWEETBOOK_API_KEY;
+    if (!baseUrl || !apiKey) {
+      throw new Error('SWEETBOOK_API_BASE_URL/SWEETBOOK_API_KEY 환경변수 누락');
+    }
+    const url = `${baseUrl.replace(/\/$/, '')}/books/${bookUid}/finalization`;
+    const resp = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    const bodyText = await resp.text();
+    console.log('[bookService.finalize] status:', resp.status, 'body:', bodyText);
+    if (!resp.ok) {
+      const err = new Error(`FINALIZE_FAILED: ${resp.status} ${bodyText}`);
+      err.statusCode = 400;
+      throw err;
+    }
+    let result;
+    try {
+      result = JSON.parse(bodyText);
+    } catch {
+      result = bodyText;
+    }
 
     // 최종화 성공 시 로컬 상태 갱신
     await db.project.updateMany({

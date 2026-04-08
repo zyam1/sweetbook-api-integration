@@ -27,8 +27,8 @@ export async function getAnthology(id) {
   return data;
 }
 
-export async function updateCover(id, payload) {
-  const { data } = await client.patch(`/anthology/${id}/cover`, payload);
+export async function updateCover(id, { frontPhoto, backPhoto }) {
+  const { data } = await client.patch(`/anthology/${id}/cover`, { frontPhoto, backPhoto });
   return data;
 }
 
@@ -80,10 +80,9 @@ export async function updateMyHandle(handle) {
   return data;
 }
 
-export async function uploadContributionFile(file, extra = {}) {
+export async function uploadContributionFile(file) {
   const form = new FormData();
   form.append('file', file);
-  Object.entries(extra).forEach(([k, v]) => form.append(k, v));
   const { data } = await client.post('/anthology/contrib/submissions', form, {
     headers: { ...contribHeaders(), 'Content-Type': 'multipart/form-data' },
   });
