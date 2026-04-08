@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { listAnthologies } from "../anthology/api";
+import { useAuth } from "../auth/useAuth";
 import { orderStatusLabel, orderBadgeClass } from "../anthology/orderStatus";
 import {
   anthologyStatusLabel,
@@ -15,11 +16,13 @@ const coverBaseUrl = `${import.meta.env.VITE_API_BASE_URL || "http://localhost:4
 
 // Figma: SweetPress (fileKey: 7WJrsI7QOEOrXFP1x4LtAH) — 디자인 토큰/ant-* 공통 클래스 재사용
 export default function HomePage() {
+  const { isLoggedIn } = useAuth();
   const [owned, setOwned] = useState([]);
   const [ownedLoading, setOwnedLoading] = useState(true);
   const [ownedError, setOwnedError] = useState(null);
 
   useEffect(() => {
+    if (!isLoggedIn) return;
     let alive = true;
     listAnthologies("owner")
       .then((data) => {
@@ -38,7 +41,9 @@ export default function HomePage() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [isLoggedIn]);
+
+  if (!isLoggedIn) return <Navigate to="/login" replace />;
 
   const renderCards = (items) => (
     <div className="ant-grid">
