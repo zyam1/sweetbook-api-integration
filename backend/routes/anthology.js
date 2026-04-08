@@ -298,6 +298,41 @@ router.get('/:id/contributors', authRequired, async (req, res, next) => {
   }
 });
 
+// 전체 제출 사진 목록 (주최자)
+router.get('/:id/submissions', authRequired, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const data = await anthologyService.listAllSubmissions(id, req.user.id);
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 전체 제출 사진 순서 변경 (주최자)
+router.patch('/:id/submissions/order', authRequired, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const { orderedIds } = req.body || {};
+    const data = await anthologyService.reorderAllSubmissions(id, req.user.id, orderedIds);
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 제출 사진 삭제 (주최자)
+router.delete('/:id/submissions/:sid', authRequired, async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const sid = Number(req.params.sid);
+    const data = await anthologyService.removeSubmission(id, req.user.id, sid);
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // 합본 최종화
 router.post('/:id/finalize', authRequired, async (req, res, next) => {
   try {

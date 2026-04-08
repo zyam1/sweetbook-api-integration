@@ -103,38 +103,33 @@ async function runFinalize(anthology, contributors, allSubmissions) {
     parameters: coverParams,
   });
 
-  // 4) POST /books/{id}/contents — 제출물마다 1회씩 반복
-  for (const c of contributors) {
-    const subs = allSubmissions.filter((s) => s.contributorId === c.id);
-    if (subs.length === 0) {
-      console.log(`[insertContent] SKIP contributor ${c.id} (${c.handle}) — 제출물 0`);
-      continue;
-    }
-    const dayLabel = c.handle || `contributor-${c.id}`;
-    for (let i = 0; i < subs.length; i++) {
-      const sub = subs[i];
-      const contentParams = {
-        photo: nameMap.get(sub.fileName),
-        dayLabel,
-        hasDayLabel: true,
-      };
-      console.log(`[insertContent] contributor ${c.id} subIdx=${i + 1}/${subs.length} params=`, JSON.stringify(contentParams));
-      try {
-        const r = await bookService.insertContent(bookUid, {
-          templateUid: ANTHOLOGY_CONTENT_TEMPLATE_UID,
-          parameters: contentParams,
-          breakBefore: 'page',
-        });
-        console.log(`[insertContent] contributor ${c.id} subIdx=${i + 1} OK ->`, JSON.stringify(r).slice(0, 300));
-      } catch (err) {
-        console.error(`[insertContent] contributor ${c.id} subIdx=${i + 1} FAILED`, {
-          message: err?.message,
-          status: err?.status ?? err?.statusCode,
-          body: err?.body,
-          response: err?.response,
-        });
-        throw err;
-      }
+  // 4) POST /books/{id}/contents — 전체 합본 글로벌 순서(order asc)로 반복
+  const contributorMap = new Map(contributors.map((c) => [c.id, c]));
+  for (let i = 0; i < allSubmissions.length; i++) {
+    const sub = allSubmissions[i];
+    const c = contributorMap.get(sub.contributorId);
+    const dayLabel = c?.handle || `contributor-${sub.contributorId}`;
+    const contentParams = {
+      photo: nameMap.get(sub.fileName),
+      dayLabel,
+      hasDayLabel: true,
+    };
+    console.log(`[insertContent] globalIdx=${i + 1}/${allSubmissions.length} contributor=${sub.contributorId} params=`, JSON.stringify(contentParams));
+    try {
+      const r = await bookService.insertContent(bookUid, {
+        templateUid: ANTHOLOGY_CONTENT_TEMPLATE_UID,
+        parameters: contentParams,
+        breakBefore: 'page',
+      });
+      console.log(`[insertContent] globalIdx=${i + 1} OK ->`, JSON.stringify(r).slice(0, 300));
+    } catch (err) {
+      console.error(`[insertContent] globalIdx=${i + 1} FAILED`, {
+        message: err?.message,
+        status: err?.status ?? err?.statusCode,
+        body: err?.body,
+        response: err?.response,
+      });
+      throw err;
     }
   }
 

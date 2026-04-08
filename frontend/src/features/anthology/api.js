@@ -111,6 +111,21 @@ export async function reorderContributors(id, orderedIds) {
   return data;
 }
 
+export async function listAllSubmissions(id) {
+  const { data } = await client.get(`/anthology/${id}/submissions`);
+  return data;
+}
+
+export async function deleteSubmission(id, sid) {
+  const { data } = await client.delete(`/anthology/${id}/submissions/${sid}`);
+  return data;
+}
+
+export async function reorderSubmissions(id, orderedIds) {
+  const { data } = await client.patch(`/anthology/${id}/submissions/order`, { orderedIds });
+  return data;
+}
+
 export async function aiInspect() {
   const { data } = await client.post('/anthology/contrib/me/ai-inspect', null, {
     headers: contribHeaders(),

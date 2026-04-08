@@ -15,6 +15,17 @@ const {
   ANTHOLOGY_COVER_TEMPLATE_UID,
 } = require('./anthologyConstants');
 
+// 주어진 anthology의 다음 글로벌 submission order 계산 (max+1, 비어있으면 0)
+async function nextSubmissionOrder(anthologyId) {
+  const agg = await db.contributorSubmission.aggregate({
+    where: { contributor: { anthologyId } },
+    _max: { order: true },
+    _count: { _all: true },
+  });
+  if (!agg._count._all) return 0;
+  return (agg._max.order ?? -1) + 1;
+}
+
 const anthologyService = {
   // 내가 소유(주최)한 합본 목록 (마감일 빠른 순)
   async listOwned(userId) {
@@ -268,6 +279,7 @@ const anthologyService = {
       throw err;
     }
     const { fileName, storedPath, mimeType, sizeBytes, dpi } = fileMeta;
+    const nextOrder = await nextSubmissionOrder(anthologyId);
     return db.contributorSubmission.create({
       data: {
         contributorId,
@@ -276,8 +288,125 @@ const anthologyService = {
         mimeType: mimeType ?? null,
         sizeBytes: sizeBytes ?? null,
         dpi: dpi ?? null,
+        order: nextOrder,
       },
     });
+  },
+
+  // 합본 전체 submission 목록 (주최자 전용, 글로벌 순서)
+  async listAllSubmissions(anthologyId, ownerId) {
+    const anthology = await db.anthology.findUnique({ where: { id: anthologyId } });
+    if (!anthology) {
+      const err = new Error('ANTHOLOGY_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (anthology.ownerId !== ownerId) {
+      const err = new Error('FORBIDDEN');
+      err.statusCode = 403;
+      throw err;
+    }
+    const rows = await db.contributorSubmission.findMany({
+      where: { contributor: { anthologyId } },
+      include: {
+        contributor: { select: { id: true, handle: true, status: true } },
+      },
+      orderBy: [{ order: 'asc' }, { id: 'asc' }],
+    });
+    return rows;
+  },
+
+  // 합본 submission 삭제 (주최자 전용)
+  async removeSubmission(anthologyId, ownerId, submissionId) {
+    const anthology = await db.anthology.findUnique({ where: { id: anthologyId } });
+    if (!anthology) {
+      const err = new Error('ANTHOLOGY_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (anthology.ownerId !== ownerId) {
+      const err = new Error('FORBIDDEN');
+      err.statusCode = 403;
+      throw err;
+    }
+    const submission = await db.contributorSubmission.findUnique({
+      where: { id: submissionId },
+      include: { contributor: true },
+    });
+    if (!submission || submission.contributor.anthologyId !== anthologyId) {
+      const err = new Error('SUBMISSION_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (submission.contributor.status === 'SUBMITTED') {
+      const err = new Error('SUBMITTED_LOCKED');
+      err.statusCode = 409;
+      throw err;
+    }
+    await db.contributorSubmission.delete({ where: { id: submissionId } });
+    try {
+      await require('fs/promises').unlink(submission.storedPath);
+    } catch (e) {
+      console.warn('[anthology.removeSubmission] 파일 삭제 실패', e.message);
+    }
+    // 남은 submission order 재정렬 (0..N-1)
+    const remaining = await db.contributorSubmission.findMany({
+      where: { contributor: { anthologyId } },
+      orderBy: [{ order: 'asc' }, { id: 'asc' }],
+      select: { id: true },
+    });
+    await db.$transaction(
+      remaining.map((s, idx) =>
+        db.contributorSubmission.update({
+          where: { id: s.id },
+          data: { order: idx },
+        })
+      )
+    );
+    return { ok: true };
+  },
+
+  // 합본 전체 submission 순서 변경 (주최자 전용)
+  async reorderAllSubmissions(anthologyId, ownerId, orderedIds) {
+    const anthology = await db.anthology.findUnique({ where: { id: anthologyId } });
+    if (!anthology) {
+      const err = new Error('ANTHOLOGY_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (anthology.ownerId !== ownerId) {
+      const err = new Error('FORBIDDEN');
+      err.statusCode = 403;
+      throw err;
+    }
+    const existing = await db.contributorSubmission.findMany({
+      where: { contributor: { anthologyId } },
+      select: { id: true },
+    });
+    const existingIds = new Set(existing.map((s) => s.id));
+    if (!Array.isArray(orderedIds) || orderedIds.length !== existing.length) {
+      const err = new Error('ORDERED_IDS_COUNT_MISMATCH');
+      err.statusCode = 400;
+      throw err;
+    }
+    const seen = new Set();
+    for (const id of orderedIds) {
+      if (!existingIds.has(id) || seen.has(id)) {
+        const err = new Error('ORDERED_IDS_INVALID');
+        err.statusCode = 400;
+        throw err;
+      }
+      seen.add(id);
+    }
+    await db.$transaction(
+      orderedIds.map((sid, idx) =>
+        db.contributorSubmission.update({
+          where: { id: sid },
+          data: { order: idx },
+        })
+      )
+    );
+    return { ok: true };
   },
 
   // contributor 대시보드 (참여자 관점)
@@ -395,6 +524,7 @@ const anthologyService = {
       err.statusCode = 409;
       throw err;
     }
+    const nextOrder = await nextSubmissionOrder(contributor.anthologyId);
     const created = await db.contributorSubmission.create({
       data: {
         contributorId,
@@ -404,6 +534,7 @@ const anthologyService = {
         sizeBytes: sizeBytes ?? null,
         dpi: dpi ?? null,
         bindingKey: bindingKey ?? null,
+        order: nextOrder,
       },
     });
     if (contributor.status === 'PENDING') {
@@ -516,7 +647,7 @@ const anthologyService = {
     });
     const submissions = await db.contributorSubmission.findMany({
       where: { contributorId: { in: contributors.map((c) => c.id) } },
-      orderBy: { id: 'asc' },
+      orderBy: [{ order: 'asc' }, { id: 'asc' }],
     });
 
     const { bookUid, estimate } = await anthologyFlowService.runFinalize(
@@ -557,11 +688,14 @@ const anthologyService = {
       err.statusCode = 409;
       throw err;
     }
-    return orderService.create({
-      items: [{ bookUid, quantity }],
-      shipping,
-      externalRef: `anthology:${anthologyId}`,
-    });
+    return orderService.create(
+      {
+        items: [{ bookUid, quantity }],
+        shipping,
+        externalRef: `anthology:${anthologyId}`,
+      },
+      { userId: ownerId }
+    );
   },
 
   // 합본 삭제 (주최자 전용)

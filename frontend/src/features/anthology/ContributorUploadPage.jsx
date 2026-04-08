@@ -43,7 +43,9 @@ export default function ContributorUploadPage() {
     try {
       const d = await getContribDashboard();
       setDashboard(d);
-    } catch (_) {}
+    } catch {
+      // ignore
+    }
     load();
   };
 
@@ -214,36 +216,35 @@ export default function ContributorUploadPage() {
             </div>
             {handleMsg && <p className="ant-sub" style={{ marginTop: 6 }}>{handleMsg}</p>}
           </div>
-        </div>
-      )}
-
-      {dashboard?.requirements && (
-        <div className="ant-card">
-          <h2>필수 체크리스트</h2>
-          {(() => {
-            const req = dashboard.requirements;
-            const photo = req.photoCount || {};
-            const photoInsufficient =
-              photo.min != null && (photo.current ?? 0) < photo.min;
-            return (
-              <ul className="ant-list" style={{ marginTop: 8 }}>
-                <li>
-                  <span>
-                    {req.handle?.ok ? '✅' : '⚠️'} 이름 입력{' '}
-                    <span style={{ color: 'var(--ant-danger, #c33)' }}>*</span>
-                  </span>
-                </li>
-                <li>
-                  <span>
-                    {photoInsufficient ? '⚠️' : '✅'} 사진 {photo.current ?? 0}장
-                    {photo.min != null && <> / 최소 {photo.min}장</>}
-                    {photoInsufficient && ' (부족)'}{' '}
-                    <span style={{ color: 'var(--ant-danger, #c33)' }}>*</span>
-                  </span>
-                </li>
-              </ul>
-            );
-          })()}
+          {dashboard?.requirements && (
+            <>
+              <div className="ant-sub" style={{ marginTop: 12 }}>필수 체크리스트</div>
+              {(() => {
+                const req = dashboard.requirements;
+                const photo = req.photoCount || {};
+                const photoInsufficient =
+                  photo.min != null && (photo.current ?? 0) < photo.min;
+                return (
+                  <ul className="ant-list" style={{ marginTop: 8 }}>
+                    <li>
+                      <span>
+                        {req.handle?.ok ? '✅' : '⚠️'} 이름 입력{' '}
+                        <span style={{ color: 'var(--ant-danger, #c33)' }}>*</span>
+                      </span>
+                    </li>
+                    <li>
+                      <span>
+                        {photoInsufficient ? '⚠️' : '✅'} 사진 {photo.current ?? 0}장
+                        {photo.min != null && <> / 최소 {photo.min}장</>}
+                        {photoInsufficient && ' (부족)'}{' '}
+                        <span style={{ color: 'var(--ant-danger, #c33)' }}>*</span>
+                      </span>
+                    </li>
+                  </ul>
+                );
+              })()}
+            </>
+          )}
         </div>
       )}
 

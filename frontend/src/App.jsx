@@ -7,9 +7,12 @@ import AnthologyListPage from './features/anthology/AnthologyListPage';
 import AnthologyNewPage from './features/anthology/AnthologyNewPage';
 import AnthologyDashboardPage from './features/anthology/AnthologyDashboardPage';
 import ContributorsPage from './features/anthology/ContributorsPage';
+import AnthologyPhotosPage from './features/anthology/AnthologyPhotosPage';
 import AnthologyOrderPage from './features/anthology/AnthologyOrderPage';
 import ContributorAuthPage from './features/anthology/ContributorAuthPage';
 import ContributorUploadPage from './features/anthology/ContributorUploadPage';
+import OrderListPage from './features/order/OrderListPage';
+import OrderDetailPage from './features/order/OrderDetailPage';
 import './App.css';
 
 function App() {
@@ -26,7 +29,10 @@ function App() {
           <Route path="/anthology/new" element={<AnthologyNewPage />} />
           <Route path="/anthology/:id" element={<AnthologyDashboardPage />} />
           <Route path="/anthology/:id/contributors" element={<ContributorsPage />} />
+          <Route path="/anthology/:id/photos" element={<AnthologyPhotosPage />} />
           <Route path="/anthology/:id/order" element={<AnthologyOrderPage />} />
+          <Route path="/orders" element={<OrderListPage />} />
+          <Route path="/orders/:orderUid" element={<OrderDetailPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

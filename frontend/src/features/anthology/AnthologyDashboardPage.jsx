@@ -211,6 +211,9 @@ export default function AnthologyDashboardPage() {
             >
               표지 설정
             </button>
+            <Link to={`/anthology/${id}/photos`} className="ant-btn" style={{ marginLeft: 8 }}>
+              사진/순서 관리
+            </Link>
           </div>
         </div>
 

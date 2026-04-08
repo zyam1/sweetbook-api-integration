@@ -38,6 +38,7 @@ export default function Layout() {
           <nav className="mp-nav">
             <Link to="/">메인</Link>
             <Link to="/anthology">합동지</Link>
+            {user && <Link to="/orders">주문조회</Link>}
           </nav>
           <div className="mp-header-right">
             {user ? (
