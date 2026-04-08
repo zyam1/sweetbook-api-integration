@@ -61,6 +61,8 @@ npm run dev
 테스트 아이디: test@email.com
 테스트 비밀번호:test1234
 
+더미데이터의 참여자 인증 비밀번호는 전부 ' 1234 ' 입니다
+
 ---
 
 ## 3. 사용한 API 목록 (SweetBook / Book Print API)
