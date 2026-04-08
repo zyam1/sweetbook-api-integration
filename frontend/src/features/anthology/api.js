@@ -71,7 +71,7 @@ export async function updateMyHandle(handle) {
   return data;
 }
 
-export async function submitContribution(file, extra = {}) {
+export async function uploadContributionFile(file, extra = {}) {
   const form = new FormData();
   form.append('file', file);
   Object.entries(extra).forEach(([k, v]) => form.append(k, v));
@@ -100,6 +100,22 @@ export async function ownerUploadForContributor(id, cid, file, extra = {}) {
 
 export async function reorderContributors(id, orderedIds) {
   const { data } = await client.patch(`/anthology/${id}/contributors/order`, { orderedIds });
+  return data;
+}
+
+export async function aiInspect(token) {
+  const { data } = await client.post(`/anthology/submit/${token}/ai-inspect`);
+  return data;
+}
+
+// 참여자 제출 확정 / 취소 (3-state 플로우)
+export async function submitContribution(token) {
+  const { data } = await client.post(`/anthology/submit/${token}/finalize`);
+  return data;
+}
+
+export async function unsubmitContribution(token) {
+  const { data } = await client.delete(`/anthology/submit/${token}/finalize`);
   return data;
 }
 

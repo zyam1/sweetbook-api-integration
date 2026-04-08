@@ -1,1 +1,46 @@
 /* AnthologyDashboardPage 전용 (공통은 anthology.css) */
+
+.participant-row {
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border-radius: 10px;
+}
+
+.participant-row:hover {
+  background: #f7f5ff;
+}
+
+.participant-row .arrow {
+  margin-left: 4px;
+  color: #737380;
+  font-size: 18px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.participant-row:hover .arrow {
+  transform: translateX(4px);
+}
+
+/* 참여자 상태 뱃지 (3-state) */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+.badge-pending {
+  background: #f4f2ec;
+  color: #1a1a1a;
+}
+.badge-draft {
+  background: #ffe66d;
+  color: #1a1a1a;
+}
+.badge-submitted {
+  background: #c9b6ff;
+  color: #1a1a1a;
+}
+

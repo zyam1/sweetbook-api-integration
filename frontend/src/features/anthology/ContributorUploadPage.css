@@ -1,1 +1,113 @@
 /* ContributorUploadPage 전용 (공통은 anthology.css) */
+
+.ai-inspect-card {
+  border: 1px solid #e0dbeb;
+}
+
+.ai-inspect-btn {
+  background: #c9b6ff;
+  color: #1a1a26;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.ai-inspect-btn:hover:not(:disabled) {
+  background: #b89eff;
+}
+
+.ai-inspect-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-result {
+  margin-top: 16px;
+}
+
+.ai-summary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.ai-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f7f5ff;
+  color: #1a1a26;
+}
+
+.ai-chip.ok { background: #ebe5f5; color: #1a1a26; }
+.ai-chip.warn { background: #ffe66d; color: #1a1a26; }
+.ai-chip.danger { background: #ff4d8d; color: #ffffff; }
+.ai-chip.count { background: #faf9f5; color: #737380; border: 1px solid #e0dbeb; }
+
+.ai-result-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ai-result-row {
+  border: 1px solid #e0dbeb;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #ffffff;
+}
+
+.ai-result-row.level-warn { border-color: #ffe66d; background: #fffdf2; }
+.ai-result-row.level-danger { border-color: #ff4d8d; background: #fff5f8; }
+
+.ai-row-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ai-level-badge {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ai-level-badge.ok { background: #ebe5f5; color: #1a1a26; }
+.ai-level-badge.warn { background: #ffe66d; color: #1a1a26; }
+.ai-level-badge.danger { background: #ff4d8d; color: #ffffff; }
+
+.ai-file {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1a1a26;
+}
+
+.ai-issues {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+  font-size: 12px;
+  color: #737380;
+}
+
+.ai-issues li { margin: 2px 0; }
+
+.ai-reco {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: #1a1a26;
+  background: #f7f5ff;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+

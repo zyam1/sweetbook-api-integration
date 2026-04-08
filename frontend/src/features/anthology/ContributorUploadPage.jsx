@@ -1,6 +1,16 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { submitContribution, listMySubmissions, getContributorToken, getContribDashboard, updateMyHandle } from './api';
+import {
+  uploadContributionFile,
+  listMySubmissions,
+  getContributorToken,
+  getContribDashboard,
+  updateMyHandle,
+  aiInspect,
+  submitContribution,
+  unsubmitContribution,
+} from './api';
+import Modal from '../../components/ui/Modal';
 import './anthology.css';
 import './ContributorUploadPage.css';
 
@@ -16,6 +26,77 @@ export default function ContributorUploadPage() {
   const [handleInput, setHandleInput] = useState('');
   const [handleSaving, setHandleSaving] = useState(false);
   const [handleMsg, setHandleMsg] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState(null);
+  const [aiError, setAiError] = useState(null);
+  const [inspectCount, setInspectCount] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  // 참여자 상태: PENDING(파일 없음) / DRAFT(파일 있음) / SUBMITTED(제출 완료)
+  const myStatus =
+    dashboard?.status ||
+    dashboard?.me?.status ||
+    dashboard?.contributor?.status ||
+    (submissions.length > 0 ? 'DRAFT' : 'PENDING');
+
+  const reloadAll = async () => {
+    try {
+      const d = await getContribDashboard();
+      setDashboard(d);
+    } catch (_) {}
+    load();
+  };
+
+  const doSubmit = async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await submitContribution(token);
+      await reloadAll();
+    } catch (e) {
+      setSubmitError(e?.response?.data?.error || e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmitClick = () => {
+    const danger = aiResult?.summary?.danger ?? 0;
+    if (aiResult && danger > 0) {
+      setConfirmOpen(true);
+      return;
+    }
+    doSubmit();
+  };
+
+  const handleUnsubmit = async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await unsubmitContribution(token);
+      await reloadAll();
+    } catch (e) {
+      setSubmitError(e?.response?.data?.error || e.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleAiInspect = async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const data = await aiInspect(token);
+      setAiResult(data);
+      setInspectCount((n) => n + 1);
+    } catch (e) {
+      setAiError(e?.response?.data?.error || e.message);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const load = () => {
     listMySubmissions()
@@ -61,7 +142,7 @@ export default function ContributorUploadPage() {
     setError(null);
     try {
       for (const file of files) {
-        await submitContribution(file);
+        await uploadContributionFile(file);
       }
       load();
     } catch (e) {
@@ -84,8 +165,36 @@ export default function ContributorUploadPage() {
           <h1>원고 업로드</h1>
           <p className="ant-sub">합동지에 사용할 사진을 업로드하세요. 300 DPI 이상 권장.</p>
         </div>
-        <span className="ant-badge yellow">진행 중</span>
+        <div className="ant-row" style={{ gap: 8, alignItems: 'center' }}>
+          {myStatus === 'SUBMITTED' ? (
+            <>
+              <span className="ant-badge lavender">제출 완료 ✓</span>
+              <button
+                type="button"
+                className="ant-btn"
+                onClick={handleUnsubmit}
+                disabled={submitting}
+              >
+                {submitting ? '처리 중...' : '제출 취소'}
+              </button>
+            </>
+          ) : myStatus === 'DRAFT' ? (
+            <button
+              type="button"
+              className="ant-btn ant-btn-primary"
+              onClick={handleSubmitClick}
+              disabled={submitting}
+            >
+              {submitting ? '제출 중...' : '제출하기'}
+            </button>
+          ) : (
+            <button type="button" className="ant-btn" disabled>
+              파일 업로드 후 제출 가능
+            </button>
+          )}
+        </div>
       </div>
+      {submitError && <p className="ant-error">{submitError}</p>}
 
       {dashboard && (
         <div className="ant-card">
@@ -146,6 +255,63 @@ export default function ContributorUploadPage() {
 
       {error && <p className="ant-error">{error}</p>}
 
+      <div className="ant-card ai-inspect-card">
+        <div className="ant-row-between">
+          <div>
+            <h2>🤖 AI 인쇄 위험 분석</h2>
+            <p className="ant-sub" style={{ marginTop: 6 }}>
+              해상도, 잘림, 색상 등 인쇄 시 발생할 수 있는 위험을 AI가 점검합니다. 무제한 재검수 가능.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="ant-btn ai-inspect-btn"
+            disabled={aiLoading || submissions.length === 0}
+            onClick={handleAiInspect}
+          >
+            {aiLoading ? '분석 중...' : aiResult ? '🔄 다시 분석' : '🤖 AI 분석 시작'}
+          </button>
+        </div>
+
+        {aiError && <p className="ant-error" style={{ marginTop: 10 }}>{aiError}</p>}
+
+        {aiResult && (
+          <div className="ai-result">
+            <div className="ai-summary">
+              <span className="ai-chip ok">✅ 통과 {aiResult.summary?.ok ?? 0}</span>
+              <span className="ai-chip warn">⚠️ 주의 {aiResult.summary?.warn ?? 0}</span>
+              <span className="ai-chip danger">🚨 위험 {aiResult.summary?.danger ?? 0}</span>
+              <span className="ai-chip count">재분석 {inspectCount}회</span>
+            </div>
+            <ul className="ai-result-list">
+              {(aiResult.pages || aiResult.items || []).map((p, i) => {
+                const level = p.level || p.severity || 'ok';
+                return (
+                  <li key={p.id || p.fileName || i} className={`ai-result-row level-${level}`}>
+                    <div className="ai-row-head">
+                      <span className={`ai-level-badge ${level}`}>
+                        {level === 'danger' ? '🚨 위험' : level === 'warn' ? '⚠️ 주의' : '✅ 통과'}
+                      </span>
+                      <span className="ai-file">{p.fileName || p.name || `페이지 ${i + 1}`}</span>
+                    </div>
+                    {Array.isArray(p.issues) && p.issues.length > 0 && (
+                      <ul className="ai-issues">
+                        {p.issues.map((iss, j) => (
+                          <li key={j}>{typeof iss === 'string' ? iss : iss.message}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {p.recommendation && (
+                      <p className="ai-reco">💡 {p.recommendation}</p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
+
       <div className="ant-card">
         <h2>업로드된 사진 ({submissions.length})</h2>
         {submissions.length === 0 ? (
@@ -177,6 +343,20 @@ export default function ContributorUploadPage() {
           </ul>
         )}
       </div>
+
+      <Modal
+        open={confirmOpen}
+        title="위험 항목이 있습니다"
+        message={`AI 분석에서 위험 항목이 ${aiResult?.summary?.danger ?? 0}개 발견되었습니다. 그래도 제출하시겠습니까?`}
+        variant="danger"
+        confirmText="제출"
+        cancelText="취소"
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={() => {
+          setConfirmOpen(false);
+          doSubmit();
+        }}
+      />
     </div>
   );
 }

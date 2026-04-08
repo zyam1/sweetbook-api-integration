@@ -98,6 +98,7 @@ model Contributor {
   allocatedPages Int       @default(0)
   order          Int       @default(0)
   status         String    @default("PENDING")
+  submittedAt    DateTime?
   inviteToken    String    @unique
   deadline       DateTime?
   tokenUsedAt    DateTime?

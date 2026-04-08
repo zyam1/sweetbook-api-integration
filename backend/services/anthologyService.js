@@ -316,7 +316,18 @@ const anthologyService = {
 
   // contributor 제출물 추가
   async addSubmission(contributorId, { fileName, storedPath, mimeType, sizeBytes, dpi }) {
-    return db.contributorSubmission.create({
+    const contributor = await db.contributor.findUnique({ where: { id: contributorId } });
+    if (!contributor) {
+      const err = new Error('CONTRIBUTOR_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (contributor.status === 'SUBMITTED') {
+      const err = new Error('이미 제출된 상태입니다. 취소 후 다시 업로드하세요.');
+      err.statusCode = 409;
+      throw err;
+    }
+    const created = await db.contributorSubmission.create({
       data: {
         contributorId,
         fileName,
@@ -326,6 +337,80 @@ const anthologyService = {
         dpi: dpi ?? null,
       },
     });
+    if (contributor.status === 'PENDING') {
+      await db.contributor.update({
+        where: { id: contributorId },
+        data: { status: 'DRAFT' },
+      });
+    }
+    return created;
+  },
+
+  // contributor 제출 확정 (DRAFT → SUBMITTED)
+  async submitContribution(contributorId) {
+    const contributor = await db.contributor.findUnique({
+      where: { id: contributorId },
+      include: { _count: { select: { submissions: true } } },
+    });
+    if (!contributor) {
+      const err = new Error('CONTRIBUTOR_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (contributor.status === 'SUBMITTED') {
+      const err = new Error('이미 제출됨');
+      err.statusCode = 409;
+      throw err;
+    }
+    if (contributor._count.submissions === 0) {
+      const err = new Error('업로드된 파일이 없습니다');
+      err.statusCode = 400;
+      throw err;
+    }
+    const updated = await db.contributor.update({
+      where: { id: contributorId },
+      data: { status: 'SUBMITTED', submittedAt: new Date() },
+      select: {
+        id: true,
+        handle: true,
+        allocatedPages: true,
+        status: true,
+        submittedAt: true,
+      },
+    });
+    return updated;
+  },
+
+  // contributor 제출 취소 (SUBMITTED → DRAFT)
+  async unsubmitContribution(contributorId) {
+    const contributor = await db.contributor.findUnique({ where: { id: contributorId } });
+    if (!contributor) {
+      const err = new Error('CONTRIBUTOR_NOT_FOUND');
+      err.statusCode = 404;
+      throw err;
+    }
+    if (contributor.status !== 'SUBMITTED') {
+      const err = new Error('제출되지 않은 상태');
+      err.statusCode = 409;
+      throw err;
+    }
+    if (contributor.deadline && new Date() > contributor.deadline) {
+      const err = new Error('마감 후 취소 불가');
+      err.statusCode = 409;
+      throw err;
+    }
+    const updated = await db.contributor.update({
+      where: { id: contributorId },
+      data: { status: 'DRAFT', submittedAt: null },
+      select: {
+        id: true,
+        handle: true,
+        allocatedPages: true,
+        status: true,
+        submittedAt: true,
+      },
+    });
+    return updated;
   },
 
   // contributor 제출물 목록

@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { deleteAnthology, getAnthology, listContributors, ownerUploadForContributor, reorderContributors } from './api';
+import { deleteAnthology, getAnthology, listContributors, reorderContributors } from './api';
 import FinalizeModal from './FinalizeModal';
 import Modal from '../../components/ui/Modal';
 import './anthology.css';
@@ -17,14 +17,7 @@ export default function AnthologyDashboardPage() {
   const [showFinalize, setShowFinalize] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [dragIndex, setDragIndex] = useState(null);
-  const [uploadingIds, setUploadingIds] = useState(() => new Set());
-  const fileInputsRef = useRef({});
-
-  const reloadContributors = () => {
-    listContributors(id)
-      .then((c) => setContributors(Array.isArray(c) ? c : c?.items || []))
-      .catch(() => {});
-  };
+  const [copiedId, setCopiedId] = useState(null);
 
   const handleDelete = async () => {
     try {
@@ -51,30 +44,18 @@ export default function AnthologyDashboardPage() {
     );
   };
 
-  const triggerUpload = (cid) => {
-    const el = fileInputsRef.current[cid];
-    if (el) el.click();
+  const handleCopyLink = (e, token) => {
+    e.stopPropagation();
+    if (!token) return;
+    const url = `${window.location.origin}/c/${token}`;
+    navigator.clipboard?.writeText(url);
+    setCopiedId(token);
+    setTimeout(() => setCopiedId((cur) => (cur === token ? null : cur)), 1500);
   };
 
-  const handleOwnerUpload = async (cid, file) => {
-    if (!file) return;
-    setUploadingIds((prev) => {
-      const next = new Set(prev);
-      next.add(cid);
-      return next;
-    });
-    try {
-      await ownerUploadForContributor(id, cid, file);
-      reloadContributors();
-    } catch (e) {
-      setError(e?.response?.data?.error || e.message);
-    } finally {
-      setUploadingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(cid);
-        return next;
-      });
-    }
+  const handleRowClick = (token) => {
+    if (!token) return;
+    navigate(`/c/${token}`);
   };
 
   useEffect(() => {
@@ -94,8 +75,10 @@ export default function AnthologyDashboardPage() {
   if (error) return <div className="ant-page"><p className="ant-error">{error}</p></div>;
   if (!anthology) return null;
 
-  const submitted = contributors.filter((c) => (c.submissionCount ?? 0) > 0).length;
+  const submitted = contributors.filter((c) => c.status === 'SUBMITTED').length;
   const pending = contributors.length - submitted;
+  const statusLabel = (s) =>
+    s === 'SUBMITTED' ? '제출완료' : s === 'DRAFT' ? '작성중' : '대기';
 
   return (
     <div className="ant-page">
@@ -159,44 +142,37 @@ export default function AnthologyDashboardPage() {
           ) : (
             <ul className="ant-list">
               {contributors.map((c, idx) => {
-                const done = (c.submissionCount ?? 0) > 0;
+                const status = c.status || 'PENDING';
                 const cid = c.id;
-                const isUploading = uploadingIds.has(cid);
+                const token = c.token;
+                const copied = copiedId === token;
                 return (
                   <li
-                    key={cid || c.token}
+                    key={cid || token}
+                    className="participant-row"
                     draggable
                     onDragStart={() => handleDragStart(idx)}
                     onDragOver={handleDragOver}
                     onDrop={() => handleDrop(idx)}
-                    style={{ cursor: 'grab' }}
+                    onClick={() => handleRowClick(token)}
                   >
                     <div>
                       <div className="name">{c.handle || c.name || '이름 없음'}</div>
                       <div className="meta">{c.email || `${c.submissionCount ?? 0}건 제출`}</div>
                     </div>
                     <div className="ant-row" style={{ gap: 8 }}>
-                      <span className={`ant-badge ${done ? 'lavender' : 'pink'}`}>
-                        {done ? '제출 완료' : '원고 미제출'}
+                      <span className={`badge badge-${status.toLowerCase()}`}>
+                        {statusLabel(status)}
                       </span>
                       <button
+                        type="button"
                         className="ant-btn"
-                        disabled={isUploading || !cid}
-                        onClick={() => triggerUpload(cid)}
+                        disabled={!token}
+                        onClick={(e) => handleCopyLink(e, token)}
                       >
-                        {isUploading ? '업로드 중...' : '파일 업로드'}
+                        {copied ? '복사됨' : '제출 링크 복사'}
                       </button>
-                      <input
-                        ref={(el) => { if (cid) fileInputsRef.current[cid] = el; }}
-                        type="file"
-                        accept="image/*"
-                        style={{ display: 'none' }}
-                        onChange={(e) => {
-                          const f = e.target.files?.[0];
-                          handleOwnerUpload(cid, f);
-                          e.target.value = '';
-                        }}
-                      />
+                      <span className="arrow" aria-hidden>›</span>
                     </div>
                   </li>
                 );

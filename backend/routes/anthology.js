@@ -3,8 +3,10 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const { authRequired } = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
 const { contributorAuth } = require('../middleware/contributorAuth');
 const anthologyService = require('../services/anthologyService');
+const aiInspectService = require('../services/aiInspectService');
 
 const router = Router();
 
@@ -268,6 +270,88 @@ router.post('/:id/order', authRequired, async (req, res, next) => {
     const id = Number(req.params.id);
     const { quantity, shipping } = req.body || {};
     const data = await anthologyService.createOrder(id, req.user.id, { quantity, shipping });
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 기여자 본인 AI 검수 (Authorization Bearer JWT)
+router.post('/contrib/me/ai-inspect', async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const jwtToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    let payload;
+    try {
+      payload = jwt.verify(jwtToken, process.env.CONTRIBUTOR_JWT_SECRET);
+    } catch (e) {
+      return res.status(401).json({ error: 'CONTRIBUTOR_AUTH_REQUIRED' });
+    }
+
+    const contributorId = payload.contributorId;
+    const anthologyId = payload.anthologyId;
+
+    const submissions = await anthologyService.listSubmissions(contributorId);
+    if (!submissions || submissions.length === 0) {
+      return res.status(400).json({ error: '업로드된 파일이 없습니다' });
+    }
+
+    const files = submissions.map((s, idx) => ({
+      fileName: s.fileName,
+      filePath: s.storedPath,
+      pageNo: idx + 1,
+    }));
+
+    let bookSpec = null;
+    try {
+      const anthology = await anthologyService.getById(anthologyId);
+      if (anthology?.bookSpecUid) {
+        const bookSpecService = require('../services/bookSpecService');
+        if (typeof bookSpecService?.getById === 'function') {
+          bookSpec = await bookSpecService.getById(anthology.bookSpecUid);
+        }
+      }
+    } catch (e) {
+      bookSpec = null;
+    }
+
+    const result = await aiInspectService.inspectImages(files, bookSpec);
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 기여자 본인 제출 finalize (Authorization Bearer JWT)
+router.post('/contrib/me/finalize', async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const jwtToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    let payload;
+    try {
+      payload = jwt.verify(jwtToken, process.env.CONTRIBUTOR_JWT_SECRET);
+    } catch (e) {
+      return res.status(401).json({ error: 'CONTRIBUTOR_AUTH_REQUIRED' });
+    }
+    const data = await anthologyService.submitContribution(payload.contributorId);
+    res.json(data);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 기여자 본인 제출 unfinalize (Authorization Bearer JWT)
+router.delete('/contrib/me/finalize', async (req, res, next) => {
+  try {
+    const authHeader = req.headers.authorization || '';
+    const jwtToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    let payload;
+    try {
+      payload = jwt.verify(jwtToken, process.env.CONTRIBUTOR_JWT_SECRET);
+    } catch (e) {
+      return res.status(401).json({ error: 'CONTRIBUTOR_AUTH_REQUIRED' });
+    }
+    const data = await anthologyService.unsubmitContribution(payload.contributorId);
     res.json(data);
   } catch (err) {
     next(err);
